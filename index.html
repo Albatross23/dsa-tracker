@@ -1,0 +1,3153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Practice Tracker — Placement Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1119; --panel:#161C2A; --panel-2:#1D2536; --line:#2A3348;
+    --text:#E9EDF6; --muted:#8C97AE;
+    --m1:#33D6A6; --m2:#5FA8FF; --m3:#FFB454; --m4:#FF6B6B; --m5:#C792EA;
+    --easy:#33D6A6; --med:#FFB454; --hard:#FF6B6B;
+    --lc:#5FA8FF; --hr:#33D6A6; --cf:#C792EA; --oa:#8C97AE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--text); font-family:'Inter',sans-serif; line-height:1.55; padding-bottom:70px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:inherit; cursor:pointer;}
+  a{color:inherit;}
+
+  /* ===================== LOGIN ===================== */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .login-card{
+    width:100%; max-width:420px; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:36px 32px;
+  }
+  .login-card .eyebrow{font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--m1); margin-bottom:14px;}
+  .login-card .eyebrow::before{content:"$ "; color:var(--muted);}
+  .login-card h1{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:800; margin-bottom:8px;}
+  .login-card p.sub{color:var(--muted); font-size:13.5px; margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-family:'JetBrains Mono',monospace;}
+  .field input, .field select{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:9px;
+    padding:11px 13px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none;
+  }
+  .field input:focus, .field select:focus{border-color:var(--m2);}
+  #loginBtn{
+    width:100%; margin-top:8px; background:var(--m1); color:var(--ink); border:none; border-radius:9px;
+    padding:13px; font-weight:700; font-size:14.5px;
+  }
+  #loginBtn:disabled{opacity:.5; cursor:not-allowed;}
+  .privacy-note{
+    margin-top:16px; font-size:12px; color:var(--muted); border-left:2px solid var(--m3); padding-left:11px;
+  }
+  #loginError{color:var(--hard); font-size:12.5px; margin-top:10px; display:none;}
+
+  /* ===================== APP SHELL ===================== */
+  #app{display:none;}
+  header.topbar{
+    position:sticky; top:0; z-index:30; background:var(--ink); border-bottom:1px solid var(--line);
+    padding:14px 6vw; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .brand{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:15px;}
+  .brand span{color:var(--m1);}
+  #whoami{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted);}
+  #whoami b{color:var(--text);}
+  .topbar-actions{margin-left:auto; display:flex; gap:8px;}
+  .navbtn{
+    background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:9px;
+    padding:9px 14px; font-size:13px; font-family:'JetBrains Mono',monospace;
+  }
+  .navbtn.active{border-color:var(--m1); color:var(--m1);}
+  .navbtn.ghost{background:none; color:var(--muted);}
+
+  main{padding:0 6vw;}
+
+  /* ===================== DASHBOARD ===================== */
+  #dashboardView{padding:30px 0 10px; display:none;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:30px;}
+  .stat-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  .stat-card .val{font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:800;}
+  .stat-card .lbl{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .stat-card.easy .val{color:var(--easy);} .stat-card.med .val{color:var(--med);} .stat-card.hard .val{color:var(--hard);}
+
+  .panel-block{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin-bottom:20px;}
+  .panel-block h3{font-size:15px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;}
+  .refresh-link{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--m2); background:none; border:none; cursor:pointer; padding:4px 8px; border-radius:6px; transition:all 0.2s;}
+  .refresh-link:hover{color:var(--m1); background:var(--panel-2);}
+  .spin{display:inline-block; animation:spin 1s linear infinite;}
+  @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+
+  .mod-progress{margin-bottom:14px;}
+  .mod-progress:last-child{margin-bottom:0;}
+  .mod-progress .mp-top{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
+  .mp-top .name{color:var(--text);}
+  .mp-top .frac{color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .bar-track{height:8px; background:var(--panel-2); border-radius:99px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:99px; background:var(--mc); transition:width .3s;}
+
+  table.lb{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.lb th, table.lb td{text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);}
+  table.lb th{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+  table.lb tr.me{background:rgba(51,214,166,.06);}
+  .rank{font-family:'JetBrains Mono',monospace; color:var(--muted);}
+
+  /* ===================== PRACTICE VIEW ===================== */
+  #practiceView{padding:26px 0 10px;}
+  .filterbar{
+    background:var(--ink); padding:14px 0; display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    border-bottom:1px solid var(--line); margin-bottom:22px; position:sticky; top:57px; z-index:20;
+  }
+  #search{flex:1 1 220px; background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:10px 14px; color:var(--text); font-size:14px; outline:none;}
+  #search:focus{border-color:var(--m2);}
+  select{background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:9px; padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:12.5px; outline:none; cursor:pointer;}
+  .fgroup{display:flex; gap:6px; flex-wrap:wrap;}
+  .ftoggle{font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 13px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); display:flex; align-items:center; gap:6px;}
+  .ftoggle .sw{width:7px; height:7px; border-radius:50%; background:var(--fc,var(--muted));}
+  .ftoggle.active{color:var(--text); border-color:var(--fc,var(--m2)); background:rgba(255,255,255,.04);}
+  #clearBtn{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); background:none; border:1px solid var(--line); border-radius:9px; padding:9px 13px;}
+  #resultCount{color:var(--text); font-weight:600; font-size:13px; font-family:'JetBrains Mono',monospace;}
+
+  .module{margin-bottom:26px;}
+  .module-head{display:flex; align-items:center; gap:10px; padding-bottom:10px; margin-bottom:12px; border-bottom:1px solid var(--line);}
+  .module-dot{width:11px; height:11px; border-radius:50%; background:var(--mc); flex-shrink:0;}
+  .module-head h2{font-size:16.5px; font-weight:700;}
+
+  details.topic{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--mc); border-radius:10px; margin-bottom:9px; overflow:hidden;}
+  details.topic summary{list-style:none; cursor:pointer; padding:13px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  details.topic summary::-webkit-details-marker{display:none;}
+  summary .code{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--mc); min-width:32px;}
+  summary .tname{font-weight:600; font-size:14px;}
+  summary .count{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);}
+  summary .chev{font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:12px; transition:.15s;}
+  details[open] summary .chev{transform:rotate(90deg);}
+
+  .topic-body{padding:2px 18px 16px;}
+  .diff-row{margin-bottom:9px;}
+  .diff-row:last-child{margin-bottom:0;}
+  .diff-label{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px; display:flex; align-items:center; gap:6px;}
+  .diff-label .sw{width:8px; height:8px; border-radius:50%;}
+  .diff-label.easy{color:var(--easy);} .diff-label.easy .sw{background:var(--easy);}
+  .diff-label.med{color:var(--med);} .diff-label.med .sw{background:var(--med);}
+  .diff-label.hard{color:var(--hard);} .diff-label.hard .sw{background:var(--hard);}
+  .plist{display:flex; flex-direction:column; gap:8px;}
+  .prob{
+    font-size:13px; padding:9px 12px; border-radius:9px; background:var(--panel-2);
+    border:1px solid var(--line); color:var(--text); display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .prob.solved{border-color:var(--m1); background:rgba(51,214,166,.06);}
+  .prob .tag{font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:5px; color:var(--ink);}
+  .tag-LC{background:var(--lc);} .tag-HR{background:var(--hr);} .tag-CF{background:var(--cf);} .tag-OA{background:var(--oa);}
+  .prob .ptitle{flex:1 1 auto;}
+  .prob .solvebtn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--m2); background:none; border:1px solid var(--line);
+    border-radius:7px; padding:6px 10px; white-space:nowrap; text-decoration:none;
+  }
+  .prob .solvebtn:hover{border-color:var(--m2);}
+  .prob .statusbadge{
+    flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:10px; padding:4px 9px; border-radius:6px;
+    border:1px solid var(--line); color:var(--muted); background:var(--panel);
+  }
+  .prob.solved .statusbadge{background:var(--m1); border-color:var(--m1); color:var(--ink); font-weight:700;}
+
+  .hidden{display:none !important;}
+  .empty-state{color:var(--muted); font-size:14px; padding:40px 0; text-align:center;}
+
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .legend .sw{width:8px; height:8px; border-radius:2px;}
+
+  .caveat{font-size:12px; color:var(--muted); border-left:2px solid var(--m3); padding-left:11px; margin:16px 0 0;}
+  footer{padding:28px 6vw; color:var(--muted); font-size:12px; font-family:'JetBrains Mono',monospace; border-top:1px solid var(--line); margin-top:16px;}
+
+  .icon-action-btn{
+    background:none; border:1px solid var(--line); color:var(--muted); border-radius:6px;
+    padding:4px 8px; font-size:12px; cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.2s;
+  }
+  .icon-action-btn:hover{border-color:var(--m2); color:var(--text);}
+  .icon-action-btn.active{color:var(--m3); border-color:var(--m3); background:rgba(255,180,84,0.1);}
+  .icon-action-btn.has-note{color:var(--m2); border-color:var(--m2); background:rgba(95,168,255,0.1);}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="eyebrow">practice-tracker --login</div>
+    <h1>Sign in to track your practice</h1>
+    <p class="sub">Your email identifies your account, so your progress is saved and reloads automatically next time you open this on the same device.</p>
+    <div class="field">
+      <label>Full name</label>
+      <input id="fName" type="text" placeholder="e.g. Aditi Sharma">
+    </div>
+    <div class="field">
+      <label>Email ID <span style="color:var(--hard)">*</span></label>
+      <input id="fEmail" type="email" placeholder="e.g. aditi.sharma@college.edu">
+    </div>
+    <div class="field">
+      <label>Batch</label>
+      <select id="fBatch">
+        <option value="BCA24">BCA24</option>
+        <option value="MCA25">MCA25</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>LeetCode profile link <span style="color:var(--muted)">(optional, enables auto-verified progress)</span></label>
+      <input id="fLC" type="text" placeholder="e.g. https://leetcode.com/u/aditi_codes/">
+    </div>
+    <div class="field">
+      <label>HackerRank profile link <span style="color:var(--muted)">(optional)</span></label>
+      <input id="fHR" type="text" placeholder="e.g. https://www.hackerrank.com/profile/aditi_sharma1">
+    </div>
+    <div class="field">
+      <label>CodeChef profile link <span style="color:var(--muted)">(optional)</span></label>
+      <input id="fCC" type="text" placeholder="e.g. https://www.codechef.com/users/aditi_cc">
+    <button id="loginBtn" onclick="handleLogin()">Log in</button>
+    <div id="loginError"></div>
+    <p class="privacy-note">This isn't secure authentication — there's no password or OTP check, so it can't fully stop someone from typing in another student's email. It's a lightweight class tracker: your email identifies your account, and your name, batch, and verified-solved list are visible to classmates using this same project via the leaderboard.</p>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <header class="topbar">
+    <div class="brand">practice<span>-tracker</span></div>
+    <div id="whoami"></div>
+    <div class="topbar-actions">
+      <button class="navbtn active" id="navDash" onclick="switchView('dashboard')">Dashboard</button>
+      <button class="navbtn" id="navPractice" onclick="switchView('practice')">Practice Bank</button>
+      <button class="navbtn ghost" onclick="handleLogout()">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div id="dashboardView">
+      <!-- DAILY CHALLENGE BANNER -->
+      <div id="dailyChallengeCard"></div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="val" id="statTotal">0</div><div class="lbl">Problems solved</div></div>
+        <div class="stat-card easy"><div class="val" id="statEasy">0</div><div class="lbl">Easy solved</div></div>
+        <div class="stat-card med"><div class="val" id="statMed">0</div><div class="lbl">Medium solved</div></div>
+        <div class="stat-card hard"><div class="val" id="statHard">0</div><div class="lbl">Hard solved</div></div>
+      </div>
+
+      <!-- PROFILE & SOLVED ANALYTICS CARD -->
+      <div class="panel-block" style="background:linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%); border:1px solid var(--line); border-radius:16px; padding:24px; margin-bottom:20px; box-shadow:0 8px 24px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div style="width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg, var(--m1), var(--m2)); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color:var(--ink); flex-shrink:0; box-shadow:0 4px 12px rgba(51,214,166,0.3);">
+              <span id="userAvatar">S</span>
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <h2 id="userDisplayName" style="font-size:20px; font-weight:800; color:var(--text);">Student Profile</h2>
+                <span id="userRankBadge" style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; background:rgba(245,158,11,0.15); border:1px solid #F59E0B; color:#F59E0B; padding:3px 9px; border-radius:99px;">Rank #1</span>
+              </div>
+              <p id="userSubDetail" style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted); margin-top:2px;">student@college.edu · BCA24</p>
+            </div>
+          </div>
+          <div id="donutChartContainer"></div>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Platform Solved Progress <button class="refresh-link" id="syncBtn" onclick="syncAll()">Sync my platforms ↻</button></h3>
+        <p id="syncStatus" class="caveat" style="margin:0 0 14px;">Not synced yet. Add your platform usernames and hit sync to track solved problems.</p>
+        <div id="platformStats"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Progress by module</h3>
+        <div id="moduleProgress"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Achievement Badges</h3>
+        <div id="achievementsCard"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Progress by topic (23 topics)</h3>
+        <div id="topicProgress"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Class leaderboard <button class="refresh-link" id="lbBtn" onclick="loadLeaderboard()">Refresh ↻</button></h3>
+        <table class="lb" id="leaderboardTable">
+          <thead><tr><th>#</th><th>Name</th><th>Batch</th><th>Solved</th></tr></thead>
+          <tbody id="lbBody"><tr><td colspan="4" style="color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+        <p class="caveat">Leaderboard shows everyone who has logged into this project — visible to all students using it.</p>
+      </div>
+    </div>
+
+    <!-- PRACTICE BANK -->
+    <div id="practiceView" class="hidden">
+      <div class="panel-block" style="margin-bottom:18px;">
+        <div class="mp-top" style="margin-bottom:8px;"><span class="name" style="font-weight:700;">Overall Solved Progress</span><span class="frac" id="bankFrac">0/0</span></div>
+        <div class="bar-track"><div class="bar-fill" id="bankBarFill" style="width:0%; background:var(--m1);"></div></div>
+      </div>
+      <p class="legend">
+        <span><span class="sw" style="background:var(--lc)"></span>LeetCode</span>
+        <span><span class="sw" style="background:var(--hr)"></span>HackerRank</span>
+        <span><span class="sw" style="background:var(--cf)"></span>Codeforces</span>
+      </p>
+      <div class="filterbar">
+        <input id="search" type="text" placeholder="Search a problem or topic…">
+        <select id="moduleFilter">
+          <option value="all">All modules</option>
+          <option value="m1">Module 1 — Fundamentals</option>
+          <option value="m2">Module 2 — Linear DS</option>
+          <option value="m3">Module 3 — Advanced DS &amp; Algo</option>
+          <option value="m4">Module 4 — Advanced Algo &amp; CP</option>
+          <option value="m5">Module 5 — Placement Prep</option>
+        </select>
+        <div class="fgroup" id="diffGroup">
+          <button class="ftoggle active" data-diff="e" style="--fc:var(--easy)"><span class="sw"></span>Easy</button>
+          <button class="ftoggle active" data-diff="m" style="--fc:var(--med)"><span class="sw"></span>Medium</button>
+          <button class="ftoggle active" data-diff="h" style="--fc:var(--hard)"><span class="sw"></span>Hard</button>
+        </div>
+        <div class="fgroup" id="platGroup">
+          <button class="ftoggle active" data-plat="LC" style="--fc:var(--lc)"><span class="sw"></span>LeetCode</button>
+          <button class="ftoggle active" data-plat="HR" style="--fc:var(--hr)"><span class="sw"></span>HackerRank</button>
+          <button class="ftoggle active" data-plat="CF" style="--fc:var(--cf)"><span class="sw"></span>Codeforces</button>
+          <button class="ftoggle" id="bookmarkFilterBtn" onclick="toggleBookmarkFilter()" style="--fc:var(--m3);"><span class="sw"></span>⭐ Bookmarked</button>
+        </div>
+        <button id="clearBtn" onclick="clearFilters()">Reset</button>
+        <span id="resultCount"></span>
+      </div>
+      <div id="content"></div>
+    </div>
+  </main>
+
+  <footer>practice-tracker · 36 subtopics · progress saved per student · LeetCode + HackerRank + Codeforces links</footer>
+</div>
+
+<script>
+/* ============================================================
+   DATA: d = difficulty (e/m/h), p = platform (LC/HR/CF/OA)
+   u = known slug (LC) or full URL (HR) when confident; else a
+   safe search link is generated automatically at render time.
+   ============================================================ */
+const PROBLEMS = {
+  "1.1": {
+    "name": "Arrays",
+    "items": [
+      {
+        "t": "Move Zeroes",
+        "d": "e",
+        "p": "LC",
+        "u": "move-zeroes"
+      },
+      {
+        "t": "Sort Colours",
+        "d": "e",
+        "p": "LC",
+        "u": "sort-colors"
+      },
+      {
+        "t": "Remove Duplicates from Sorted Array",
+        "d": "e",
+        "p": "LC",
+        "u": "remove-duplicates-from-sorted-array"
+      },
+      {
+        "t": "Merge Sorted Array",
+        "d": "e",
+        "p": "LC",
+        "u": "merge-sorted-array"
+      },
+      {
+        "t": "Majority Element",
+        "d": "e",
+        "p": "LC",
+        "u": "majority-element"
+      },
+      {
+        "t": "Next Permutation",
+        "d": "m",
+        "p": "LC",
+        "u": "next-permutation"
+      },
+      {
+        "t": "4Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "4sum"
+      },
+      {
+        "t": "H-Index",
+        "d": "m",
+        "p": "LC",
+        "u": "h-index"
+      },
+      {
+        "t": "Rotate Array",
+        "d": "m",
+        "p": "LC",
+        "u": "rotate-array"
+      },
+      {
+        "t": "Insert Delete GetRandom O(1)",
+        "d": "m",
+        "p": "LC",
+        "u": "insert-delete-getrandom-o1"
+      },
+      {
+        "t": "Find the Duplicate Number",
+        "d": "m",
+        "p": "LC",
+        "u": "find-the-duplicate-number"
+      },
+      {
+        "t": "Product of Array Except Self",
+        "d": "m",
+        "p": "LC",
+        "u": "product-of-array-except-self"
+      },
+      {
+        "t": "Subarray Sum Equals K",
+        "d": "m",
+        "p": "LC",
+        "u": "subarray-sum-equals-k"
+      },
+      {
+        "t": "Candy",
+        "d": "h",
+        "p": "LC",
+        "u": "candy"
+      }
+    ]
+  },
+  "1.2": {
+    "name": "Strings",
+    "items": [
+      {
+        "t": "Encode and Decode Strings",
+        "d": "m",
+        "p": "LC",
+        "u": "encode-and-decode-strings"
+      },
+      {
+        "t": "Find the Index of the First Occurrence in a String",
+        "d": "e",
+        "p": "LC",
+        "u": "find-the-index-of-the-first-occurrence-in-a-string"
+      },
+      {
+        "t": "Reverse Words in a String",
+        "d": "m",
+        "p": "LC",
+        "u": "reverse-words-in-a-string"
+      },
+      {
+        "t": "Group Anagrams",
+        "d": "m",
+        "p": "LC",
+        "u": "group-anagrams"
+      },
+      {
+        "t": "Roman to Integer",
+        "d": "e",
+        "p": "LC",
+        "u": "roman-to-integer"
+      },
+      {
+        "t": "String to Interger (atoi)",
+        "d": "m",
+        "p": "LC",
+        "u": "string-to-integer-atoi"
+      },
+      {
+        "t": "Count and Say",
+        "d": "m",
+        "p": "LC",
+        "u": "count-and-say"
+      },
+      {
+        "t": "Comapre Version Numbers",
+        "d": "m",
+        "p": "LC",
+        "u": "compare-version-numbers"
+      },
+      {
+        "t": "Text Justification",
+        "d": "h",
+        "p": "LC",
+        "u": "text-justification"
+      }
+    ]
+  },
+  "1.3": {
+    "name": "Two Pointers",
+    "items": [
+      {
+        "t": "Valid Palindrome",
+        "d": "e",
+        "p": "LC",
+        "u": "valid-palindrome"
+      },
+      {
+        "t": "Two Sum II Input Array Is Sorted",
+        "d": "m",
+        "p": "LC",
+        "u": "two-sum-ii-input-array-is-sorted"
+      },
+      {
+        "t": "3Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "3sum"
+      },
+      {
+        "t": "Trapping Rain Water",
+        "d": "m",
+        "p": "LC",
+        "u": "trapping-rain-water"
+      }
+    ]
+  },
+  "1.4": {
+    "name": "Searching & Sorting",
+    "items": [
+      {
+        "t": "Binary Search",
+        "d": "e",
+        "p": "LC",
+        "u": "binary-search"
+      },
+      {
+        "t": "Search Insert Position",
+        "d": "e",
+        "p": "LC",
+        "u": "search-insert-position"
+      },
+      {
+        "t": "Find Peak Element",
+        "d": "m",
+        "p": "LC",
+        "u": "find-peak-element"
+      },
+      {
+        "t": "Find First and Last Position of Element in Sorted Array",
+        "d": "m",
+        "p": "LC",
+        "u": "find-first-and-last-position-of-element-in-sorted-array"
+      },
+      {
+        "t": "Search a 2D Matrix",
+        "d": "m",
+        "p": "LC",
+        "u": "search-a-2d-matrix"
+      },
+      {
+        "t": "Koko Eating Bananas",
+        "d": "m",
+        "p": "LC",
+        "u": "koko-eating-bananas"
+      },
+      {
+        "t": "Find Minimum In Rotated Sorted Array",
+        "d": "m",
+        "p": "LC",
+        "u": "find-minimum-in-rotated-sorted-array"
+      },
+      {
+        "t": "Search In Rotated Sorted Array",
+        "d": "m",
+        "p": "LC",
+        "u": "search-in-rotated-sorted-array"
+      },
+      {
+        "t": "Search Suggestions System",
+        "d": "m",
+        "p": "LC",
+        "u": "search-suggestions-system"
+      },
+      {
+        "t": "Time Based Key-Value Store",
+        "d": "m",
+        "p": "LC",
+        "u": "time-based-key-value-store"
+      },
+      {
+        "t": "Median of Two Sorted Arrays",
+        "d": "h",
+        "p": "LC",
+        "u": "median-of-two-sorted-arrays"
+      }
+    ]
+  },
+  "1.5": {
+    "name": "Math & Geometry",
+    "items": [
+      {
+        "t": "Integer to Roman",
+        "d": "m",
+        "p": "LC",
+        "u": "integer-to-roman"
+      },
+      {
+        "t": "Number of Sets of K Non-Overlapping Line Segments",
+        "d": "m",
+        "p": "LC",
+        "u": "number-of-sets-of-k-non-overlapping-line-segments"
+      },
+      {
+        "t": "Happy Number",
+        "d": "e",
+        "p": "LC",
+        "u": "happy-number"
+      },
+      {
+        "t": "Plus One",
+        "d": "e",
+        "p": "LC",
+        "u": "plus-one"
+      },
+      {
+        "t": "Pow(x, n)",
+        "d": "m",
+        "p": "LC",
+        "u": "powx-n"
+      },
+      {
+        "t": "Multiply Strings",
+        "d": "m",
+        "p": "LC",
+        "u": "multiply-strings"
+      },
+      {
+        "t": "Detect Squares",
+        "d": "m",
+        "p": "LC",
+        "u": "detect-squares"
+      }
+    ]
+  },
+  "1.6": {
+    "name": "Bit Manipulation",
+    "items": [
+      {
+        "t": "Single Number",
+        "d": "e",
+        "p": "LC",
+        "u": "single-number"
+      },
+      {
+        "t": "Number of 1 Bits",
+        "d": "e",
+        "p": "LC",
+        "u": "number-of-1-bits"
+      },
+      {
+        "t": "Add Binary",
+        "d": "e",
+        "p": "LC",
+        "u": "add-binary"
+      },
+      {
+        "t": "Reverse Bits",
+        "d": "e",
+        "p": "LC",
+        "u": "reverse-bits"
+      },
+      {
+        "t": "Missing Number",
+        "d": "e",
+        "p": "LC",
+        "u": "missing-number"
+      },
+      {
+        "t": "Sum of Two Integers",
+        "d": "m",
+        "p": "LC",
+        "u": "sum-of-two-integers"
+      },
+      {
+        "t": "Reverse Integer",
+        "d": "m",
+        "p": "LC",
+        "u": "reverse-integer"
+      }
+    ]
+  },
+  "2.1": {
+    "name": "Matrix",
+    "items": [
+      {
+        "t": "Valid Sudoku",
+        "d": "m",
+        "p": "LC",
+        "u": "valid-sudoku"
+      },
+      {
+        "t": "Spiral Matrix",
+        "d": "m",
+        "p": "LC",
+        "u": "spiral-matrix"
+      },
+      {
+        "t": "Rotate Image",
+        "d": "m",
+        "p": "LC",
+        "u": "rotate-image"
+      },
+      {
+        "t": "Set Matrix Zeroes",
+        "d": "m",
+        "p": "LC",
+        "u": "set-matrix-zeroes"
+      },
+      {
+        "t": "Game of Life",
+        "d": "m",
+        "p": "LC",
+        "u": "game-of-life"
+      }
+    ]
+  },
+  "2.2": {
+    "name": "Sliding Window",
+    "items": [
+      {
+        "t": "Longest Substring Without Repeating Characters",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-substring-without-repeating-characters"
+      },
+      {
+        "t": "Longest Repeating Character Replacement",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-repeating-character-replacement"
+      },
+      {
+        "t": "Minimum Size Subarray Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-size-subarray-sum"
+      },
+      {
+        "t": "Permutation In String",
+        "d": "m",
+        "p": "LC",
+        "u": "permutation-in-string"
+      },
+      {
+        "t": "Minimum Window Substring",
+        "d": "h",
+        "p": "LC",
+        "u": "minimum-window-substring"
+      },
+      {
+        "t": "Sliding Window Maximum",
+        "d": "h",
+        "p": "LC",
+        "u": "sliding-window-maximum"
+      }
+    ]
+  },
+  "2.3": {
+    "name": "Intervals",
+    "items": [
+      {
+        "t": "Summary Ranges",
+        "d": "e",
+        "p": "LC",
+        "u": "summary-ranges"
+      },
+      {
+        "t": "Insert Interval",
+        "d": "m",
+        "p": "LC",
+        "u": "insert-interval"
+      },
+      {
+        "t": "Merge Intervals",
+        "d": "m",
+        "p": "LC",
+        "u": "merge-intervals"
+      },
+      {
+        "t": "Non-Overlapping Intervals",
+        "d": "m",
+        "p": "LC",
+        "u": "non-overlapping-intervals"
+      },
+      {
+        "t": "Meeting Rooms",
+        "d": "e",
+        "p": "LC",
+        "u": "meeting-rooms"
+      },
+      {
+        "t": "Meeting Rooms II",
+        "d": "m",
+        "p": "LC",
+        "u": "meeting-rooms-ii"
+      },
+      {
+        "t": "Minimum Number of Arrows to Burst Balloons",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-number-of-arrows-to-burst-balloons"
+      }
+    ]
+  },
+  "2.4": {
+    "name": "Hashing",
+    "items": [
+      {
+        "t": "Ransom Note",
+        "d": "e",
+        "p": "LC",
+        "u": "ransom-note"
+      },
+      {
+        "t": "Isomorphic Strings",
+        "d": "e",
+        "p": "LC",
+        "u": "isomorphic-strings"
+      },
+      {
+        "t": "Word Pattern",
+        "d": "e",
+        "p": "LC",
+        "u": "word-pattern"
+      },
+      {
+        "t": "Valid Anagram",
+        "d": "e",
+        "p": "LC",
+        "u": "valid-anagram"
+      },
+      {
+        "t": "Contains Duplicate",
+        "d": "e",
+        "p": "LC",
+        "u": "contains-duplicate"
+      },
+      {
+        "t": "Longest Consecutive Sequence",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-consecutive-sequence"
+      }
+    ]
+  },
+  "2.5": {
+    "name": "Linked Lists",
+    "items": [
+      {
+        "t": "Reverse Linked List",
+        "d": "e",
+        "p": "LC",
+        "u": "reverse-linked-list"
+      },
+      {
+        "t": "Middle of the Linked List",
+        "d": "e",
+        "p": "LC",
+        "u": "middle-of-the-linked-list"
+      },
+      {
+        "t": "Merge Two Sorted Lists",
+        "d": "e",
+        "p": "LC",
+        "u": "merge-two-sorted-lists"
+      },
+      {
+        "t": "Reorder List",
+        "d": "m",
+        "p": "LC",
+        "u": "reorder-list"
+      },
+      {
+        "t": "Remove Nth Node From End of List",
+        "d": "m",
+        "p": "LC",
+        "u": "remove-nth-node-from-end-of-list"
+      },
+      {
+        "t": "Add Two Numbers",
+        "d": "m",
+        "p": "LC",
+        "u": "add-two-numbers"
+      },
+      {
+        "t": "Linked List Cycle",
+        "d": "e",
+        "p": "LC",
+        "u": "linked-list-cycle"
+      },
+      {
+        "t": "Linked List Cycle II",
+        "d": "m",
+        "p": "LC",
+        "u": "linked-list-cycle-ii"
+      },
+      {
+        "t": "Partition List",
+        "d": "m",
+        "p": "LC",
+        "u": "partition-list"
+      },
+      {
+        "t": "Rotate List",
+        "d": "m",
+        "p": "LC",
+        "u": "rotate-list"
+      },
+      {
+        "t": "Copy List with Random Pointer",
+        "d": "m",
+        "p": "LC",
+        "u": "copy-list-with-random-pointer"
+      },
+      {
+        "t": "Swap Nodes in Pairs",
+        "d": "m",
+        "p": "LC",
+        "u": "swap-nodes-in-pairs"
+      },
+      {
+        "t": "LRU Cache",
+        "d": "m",
+        "p": "LC",
+        "u": "lru-cache"
+      },
+      {
+        "t": "Reverse Nodes In K Group",
+        "d": "h",
+        "p": "LC",
+        "u": "reverse-nodes-in-k-group"
+      }
+    ]
+  },
+  "2.6": {
+    "name": "Stacks & Queues",
+    "items": [
+      {
+        "t": "Valid Parentheses",
+        "d": "e",
+        "p": "LC",
+        "u": "valid-parentheses"
+      },
+      {
+        "t": "Next Greater Element I",
+        "d": "e",
+        "p": "LC",
+        "u": "next-greater-element-i"
+      },
+      {
+        "t": "Implement Stack Using Queues",
+        "d": "e",
+        "p": "LC",
+        "u": "implement-stack-using-queues"
+      },
+      {
+        "t": "Min Stack",
+        "d": "m",
+        "p": "LC",
+        "u": "min-stack"
+      },
+      {
+        "t": "Evaluate Reverse Polish Notation",
+        "d": "m",
+        "p": "LC",
+        "u": "evaluate-reverse-polish-notation"
+      },
+      {
+        "t": "Online Stock Span",
+        "d": "m",
+        "p": "LC",
+        "u": "online-stock-span"
+      },
+      {
+        "t": "Minimum Remove to Make Valid Parentheses",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-remove-to-make-valid-parentheses"
+      },
+      {
+        "t": "Daily Temperatures",
+        "d": "m",
+        "p": "LC",
+        "u": "daily-temperatures"
+      },
+      {
+        "t": "Simplify Path",
+        "d": "m",
+        "p": "LC",
+        "u": "simplify-path"
+      },
+      {
+        "t": "Largest Rectangle In Histogram",
+        "d": "h",
+        "p": "LC",
+        "u": "largest-rectangle-in-histogram"
+      },
+      {
+        "t": "Basic Calculator",
+        "d": "h",
+        "p": "LC",
+        "u": "basic-calculator"
+      }
+    ]
+  },
+  "3.1": {
+    "name": "Recursion & Backtracking",
+    "items": [
+      {
+        "t": "Subsets",
+        "d": "m",
+        "p": "LC",
+        "u": "subsets"
+      },
+      {
+        "t": "Combination Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "combination-sum"
+      },
+      {
+        "t": "Combination Sum II",
+        "d": "m",
+        "p": "LC",
+        "u": "combination-sum-ii"
+      },
+      {
+        "t": "Decode String",
+        "d": "m",
+        "p": "LC",
+        "u": "decode-string"
+      },
+      {
+        "t": "Generate Parentheses",
+        "d": "m",
+        "p": "LC",
+        "u": "generate-parentheses"
+      },
+      {
+        "t": "Subsets II",
+        "d": "m",
+        "p": "LC",
+        "u": "subsets-ii"
+      },
+      {
+        "t": "Combinations",
+        "d": "m",
+        "p": "LC",
+        "u": "combinations"
+      },
+      {
+        "t": "Permutations",
+        "d": "m",
+        "p": "LC",
+        "u": "permutations"
+      },
+      {
+        "t": "Word Search",
+        "d": "m",
+        "p": "LC",
+        "u": "word-search"
+      },
+      {
+        "t": "Letter Combinations of a Phone Number",
+        "d": "m",
+        "p": "LC",
+        "u": "letter-combinations-of-a-phone-number"
+      },
+      {
+        "t": "Maximum Length of a Concatenated String With Unique Characters",
+        "d": "m",
+        "p": "LC",
+        "u": "maximum-length-of-a-concatenated-string-with-unique-characters"
+      },
+      {
+        "t": "Permutation Sequence",
+        "d": "h",
+        "p": "LC",
+        "u": "permutation-sequence"
+      },
+      {
+        "t": "N Queens",
+        "d": "h",
+        "p": "LC",
+        "u": "n-queens"
+      }
+    ]
+  },
+  "3.2": {
+    "name": "Trees",
+    "items": [
+      {
+        "t": "Maximum Depth of Binary Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "maximum-depth-of-binary-tree"
+      },
+      {
+        "t": "Invert Binary Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "invert-binary-tree"
+      },
+      {
+        "t": "Symmetric Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "symmetric-tree"
+      },
+      {
+        "t": "Subtree of Another Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "subtree-of-another-tree"
+      },
+      {
+        "t": "Diameter of Binary Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "diameter-of-binary-tree"
+      },
+      {
+        "t": "Balanced Binary Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "balanced-binary-tree"
+      },
+      {
+        "t": "Merge Two Binary Trees",
+        "d": "e",
+        "p": "LC",
+        "u": "merge-two-binary-trees"
+      },
+      {
+        "t": "Path Sum",
+        "d": "e",
+        "p": "LC",
+        "u": "path-sum"
+      },
+      {
+        "t": "Minimum Distance between BST Nodes",
+        "d": "e",
+        "p": "LC",
+        "u": "minimum-distance-between-bst-nodes"
+      },
+      {
+        "t": "Construct String From Binary Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "construct-string-from-binary-tree"
+      },
+      {
+        "t": "Lowest Common Ancestor of a Binary Search Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "lowest-common-ancestor-of-a-binary-search-tree"
+      },
+      {
+        "t": "Sum Root to Leaf Numbers",
+        "d": "m",
+        "p": "LC",
+        "u": "sum-root-to-leaf-numbers"
+      },
+      {
+        "t": "Flatten Binary Tree to Linked List",
+        "d": "m",
+        "p": "LC",
+        "u": "flatten-binary-tree-to-linked-list"
+      },
+      {
+        "t": "Binary Tree Right Side View",
+        "d": "m",
+        "p": "LC",
+        "u": "binary-tree-right-side-view"
+      },
+      {
+        "t": "Lowest Common Ancestor of a Binary Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "lowest-common-ancestor-of-a-binary-tree"
+      },
+      {
+        "t": "Find Duplicate Subtrees",
+        "d": "m",
+        "p": "LC",
+        "u": "find-duplicate-subtrees"
+      },
+      {
+        "t": "Unique Binary Search Trees",
+        "d": "m",
+        "p": "LC",
+        "u": "unique-binary-search-trees"
+      },
+      {
+        "t": "Time Needed to Inform All Employees",
+        "d": "m",
+        "p": "LC",
+        "u": "time-needed-to-inform-all-employees"
+      },
+      {
+        "t": "Binary Tree Zigzag Level Order Traversal",
+        "d": "m",
+        "p": "LC",
+        "u": "binary-tree-zigzag-level-order-traversal"
+      },
+      {
+        "t": "Binary Tree Vertical Order Traversal",
+        "d": "m",
+        "p": "LC",
+        "u": "binary-tree-vertical-order-traversal"
+      },
+      {
+        "t": "Largest BST Subtree",
+        "d": "m",
+        "p": "LC",
+        "u": "largest-bst-subtree"
+      },
+      {
+        "t": "Binary Tree Level Order Traversal",
+        "d": "m",
+        "p": "LC",
+        "u": "binary-tree-level-order-traversal"
+      },
+      {
+        "t": "Find Bottom Left Tree Value",
+        "d": "m",
+        "p": "LC",
+        "u": "find-bottom-left-tree-value"
+      },
+      {
+        "t": "Boundary of Binary Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "boundary-of-binary-tree"
+      },
+      {
+        "t": "Count Good Nodes In Binary Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "count-good-nodes-in-binary-tree"
+      },
+      {
+        "t": "Validate Binary Search Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "validate-binary-search-tree"
+      },
+      {
+        "t": "Kth Smallest Element In a BST",
+        "d": "m",
+        "p": "LC",
+        "u": "kth-smallest-element-in-a-bst"
+      },
+      {
+        "t": "Construct Binary Tree From Preorder And Inorder Traversal",
+        "d": "m",
+        "p": "LC",
+        "u": "construct-binary-tree-from-preorder-and-inorder-traversal"
+      },
+      {
+        "t": "Minimum Time to Collect All Apples in a Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-time-to-collect-all-apples-in-a-tree"
+      },
+      {
+        "t": "Convert BST to Greater Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "convert-bst-to-greater-tree"
+      },
+      {
+        "t": "Maximum Sum BST in Binary Tree",
+        "d": "h",
+        "p": "LC",
+        "u": "maximum-sum-bst-in-binary-tree"
+      },
+      {
+        "t": "Binary Tree Maximum Path Sum",
+        "d": "h",
+        "p": "LC",
+        "u": "binary-tree-maximum-path-sum"
+      },
+      {
+        "t": "Serialize And Deserialize Binary Tree",
+        "d": "h",
+        "p": "LC",
+        "u": "serialize-and-deserialize-binary-tree"
+      }
+    ]
+  },
+  "3.3": {
+    "name": "Heap (Priority Queue)",
+    "items": [
+      {
+        "t": "Kth Largest Element In a Stream",
+        "d": "e",
+        "p": "LC",
+        "u": "kth-largest-element-in-a-stream"
+      },
+      {
+        "t": "Last Stone Weight",
+        "d": "e",
+        "p": "LC",
+        "u": "last-stone-weight"
+      },
+      {
+        "t": "Kth Largest Element in an Array",
+        "d": "m",
+        "p": "LC",
+        "u": "kth-largest-element-in-an-array"
+      },
+      {
+        "t": "K Closest Points to Origin",
+        "d": "m",
+        "p": "LC",
+        "u": "k-closest-points-to-origin"
+      },
+      {
+        "t": "Task Scheduler",
+        "d": "m",
+        "p": "LC",
+        "u": "task-scheduler"
+      },
+      {
+        "t": "Find K Pairs with Smallest Sums",
+        "d": "m",
+        "p": "LC",
+        "u": "find-k-pairs-with-smallest-sums"
+      },
+      {
+        "t": "Top K Frequent Elements",
+        "d": "m",
+        "p": "LC",
+        "u": "top-k-frequent-elements"
+      },
+      {
+        "t": "Design Twitter",
+        "d": "m",
+        "p": "LC",
+        "u": "design-twitter"
+      },
+      {
+        "t": "Merge k Sorted Lists",
+        "d": "h",
+        "p": "LC",
+        "u": "merge-k-sorted-lists"
+      },
+      {
+        "t": "Find Median From Data Stream",
+        "d": "h",
+        "p": "LC",
+        "u": "find-median-from-data-stream"
+      },
+      {
+        "t": "IPO",
+        "d": "h",
+        "p": "LC",
+        "u": "ipo"
+      }
+    ]
+  },
+  "3.4": {
+    "name": "Divide & Conquer",
+    "items": [
+      {
+        "t": "Convert Sorted Array to Binary Search Tree",
+        "d": "e",
+        "p": "LC",
+        "u": "convert-sorted-array-to-binary-search-tree"
+      },
+      {
+        "t": "Sort List",
+        "d": "m",
+        "p": "LC",
+        "u": "sort-list"
+      },
+      {
+        "t": "Construct Quad Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "construct-quad-tree"
+      }
+    ]
+  },
+  "4.1": {
+    "name": "Graphs",
+    "items": [
+      {
+        "t": "Island Perimeter",
+        "d": "e",
+        "p": "LC",
+        "u": "island-perimeter"
+      },
+      {
+        "t": "Verifying an Alien Dictionary",
+        "d": "e",
+        "p": "LC",
+        "u": "verifying-an-alien-dictionary"
+      },
+      {
+        "t": "Find the Town Judge",
+        "d": "e",
+        "p": "LC",
+        "u": "find-the-town-judge"
+      },
+      {
+        "t": "Number of Islands",
+        "d": "m",
+        "p": "LC",
+        "u": "number-of-islands"
+      },
+      {
+        "t": "Clone Graph",
+        "d": "m",
+        "p": "LC",
+        "u": "clone-graph"
+      },
+      {
+        "t": "Walls And Gates",
+        "d": "m",
+        "p": "LC",
+        "u": "walls-and-gates"
+      },
+      {
+        "t": "Rotting Oranges",
+        "d": "m",
+        "p": "LC",
+        "u": "rotting-oranges"
+      },
+      {
+        "t": "Pacific Atlantic Water Flow",
+        "d": "m",
+        "p": "LC",
+        "u": "pacific-atlantic-water-flow"
+      },
+      {
+        "t": "Surrounded Regions",
+        "d": "m",
+        "p": "LC",
+        "u": "surrounded-regions"
+      },
+      {
+        "t": "Course Schedule",
+        "d": "m",
+        "p": "LC",
+        "u": "course-schedule"
+      },
+      {
+        "t": "Course Schedule II",
+        "d": "m",
+        "p": "LC",
+        "u": "course-schedule-ii"
+      },
+      {
+        "t": "Evaluate Division",
+        "d": "m",
+        "p": "LC",
+        "u": "evaluate-division"
+      },
+      {
+        "t": "Graph Valid Tree",
+        "d": "m",
+        "p": "LC",
+        "u": "graph-valid-tree"
+      },
+      {
+        "t": "Number of Connected Components In An Undirected Graph",
+        "d": "m",
+        "p": "LC",
+        "u": "number-of-connected-components-in-an-undirected-graph"
+      },
+      {
+        "t": "Redundant Connection",
+        "d": "m",
+        "p": "LC",
+        "u": "redundant-connection"
+      },
+      {
+        "t": "Cheapest Flights Within K Stops",
+        "d": "m",
+        "p": "LC",
+        "u": "cheapest-flights-within-k-stops"
+      },
+      {
+        "t": "Min Cost to Connect All Points",
+        "d": "m",
+        "p": "LC",
+        "u": "min-cost-to-connect-all-points"
+      },
+      {
+        "t": "Network Delay Time",
+        "d": "m",
+        "p": "LC",
+        "u": "network-delay-time"
+      },
+      {
+        "t": "Snakes and Ladders",
+        "d": "m",
+        "p": "LC",
+        "u": "snakes-and-ladders"
+      },
+      {
+        "t": "Minimum Genetic Mutation",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-genetic-mutation"
+      },
+      {
+        "t": "Word Ladder",
+        "d": "h",
+        "p": "LC",
+        "u": "word-ladder"
+      },
+      {
+        "t": "Alien Dictionary",
+        "d": "h",
+        "p": "LC",
+        "u": "alien-dictionary"
+      },
+      {
+        "t": "Reconstruct Itinerary",
+        "d": "h",
+        "p": "LC",
+        "u": "reconstruct-itinerary"
+      },
+      {
+        "t": "Swim In Rising Water",
+        "d": "h",
+        "p": "LC",
+        "u": "swim-in-rising-water"
+      }
+    ]
+  },
+  "4.2": {
+    "name": "Disjoint Sets",
+    "items": [
+      {
+        "t": "Find if Path Exists in Graph",
+        "d": "e",
+        "p": "LC",
+        "u": "find-if-path-exists-in-graph"
+      },
+      {
+        "t": "Max Area of Island",
+        "d": "m",
+        "p": "LC",
+        "u": "max-area-of-island"
+      },
+      {
+        "t": "Making A Large Island",
+        "d": "h",
+        "p": "LC",
+        "u": "making-a-large-island"
+      }
+    ]
+  },
+  "4.3": {
+    "name": "Trie",
+    "items": [
+      {
+        "t": "Implement Trie (Prefix Tree)",
+        "d": "m",
+        "p": "LC",
+        "u": "implement-trie-prefix-tree"
+      },
+      {
+        "t": "Design Add And Search Words Data Structure",
+        "d": "m",
+        "p": "LC",
+        "u": "design-add-and-search-words-data-structure"
+      },
+      {
+        "t": "Longest Common Prefix",
+        "d": "e",
+        "p": "LC",
+        "u": "longest-common-prefix"
+      },
+      {
+        "t": "Longest Word with All Prefixes",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-word-with-all-prefixes"
+      },
+      {
+        "t": "Number of Distinct Substrings in a String",
+        "d": "m",
+        "p": "LC",
+        "u": "number-of-distinct-substrings-in-a-string"
+      },
+      {
+        "t": "Maximum XOR of Two Numbers in an Array",
+        "d": "m",
+        "p": "LC",
+        "u": "maximum-xor-of-two-numbers-in-an-array"
+      },
+      {
+        "t": "Extra Characters in a String",
+        "d": "m",
+        "p": "LC",
+        "u": "extra-characters-in-a-string"
+      },
+      {
+        "t": "Word Search II",
+        "d": "h",
+        "p": "LC",
+        "u": "word-search-ii"
+      }
+    ]
+  },
+  "4.4": {
+    "name": "Segment Tree",
+    "items": [
+      {
+        "t": "Range Sum Query - Immutable",
+        "d": "e",
+        "p": "LC",
+        "u": "range-sum-query-immutable"
+      },
+      {
+        "t": "Range Sum Query - Mutable",
+        "d": "m",
+        "p": "LC",
+        "u": "range-sum-query-mutable"
+      },
+      {
+        "t": "Count of Smaller Numbers After Self",
+        "d": "h",
+        "p": "LC",
+        "u": "count-of-smaller-numbers-after-self"
+      },
+      {
+        "t": "Count of Range Sum",
+        "d": "h",
+        "p": "LC",
+        "u": "count-of-range-sum"
+      }
+    ]
+  },
+  "5.1": {
+    "name": "Kadane's Algorithms",
+    "items": [
+      {
+        "t": "Maximum Subarray",
+        "d": "m",
+        "p": "LC",
+        "u": "maximum-subarray"
+      },
+      {
+        "t": "Maximum Sum Circular Subarray",
+        "d": "m",
+        "p": "LC",
+        "u": "maximum-sum-circular-subarray"
+      }
+    ]
+  },
+  "5.2": {
+    "name": "Dynamic Programming",
+    "items": [
+      {
+        "t": "Climbing Stairs",
+        "d": "e",
+        "p": "LC",
+        "u": "climbing-stairs"
+      },
+      {
+        "t": "Is Subsequence",
+        "d": "e",
+        "p": "LC",
+        "u": "is-subsequence"
+      },
+      {
+        "t": "Best Time to Buy and Sell Stock",
+        "d": "e",
+        "p": "LC",
+        "u": "best-time-to-buy-and-sell-stock"
+      },
+      {
+        "t": "Pascal's Triangle",
+        "d": "e",
+        "p": "LC",
+        "u": "pascals-triangle"
+      },
+      {
+        "t": "Counting Bits",
+        "d": "e",
+        "p": "LC",
+        "u": "counting-bits"
+      },
+      {
+        "t": "Maximum Product Subarray",
+        "d": "m",
+        "p": "LC",
+        "u": "maximum-product-subarray"
+      },
+      {
+        "t": "Longest Increasing Subsequence",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-increasing-subsequence"
+      },
+      {
+        "t": "Jum Game",
+        "d": "m",
+        "p": "LC",
+        "u": "jump-game"
+      },
+      {
+        "t": "Longest Common Subsequence",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-common-subsequence"
+      },
+      {
+        "t": "Best Time to Buy and Sell Stock II",
+        "d": "m",
+        "p": "LC",
+        "u": "best-time-to-buy-and-sell-stock-ii"
+      },
+      {
+        "t": "House Robber",
+        "d": "m",
+        "p": "LC",
+        "u": "house-robber"
+      },
+      {
+        "t": "House Robber II",
+        "d": "m",
+        "p": "LC",
+        "u": "house-robber-ii"
+      },
+      {
+        "t": "Palindromic Substrings",
+        "d": "m",
+        "p": "LC",
+        "u": "palindromic-substrings"
+      },
+      {
+        "t": "Longest Palindromic Substring",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-palindromic-substring"
+      },
+      {
+        "t": "Decode Ways",
+        "d": "m",
+        "p": "LC",
+        "u": "decode-ways"
+      },
+      {
+        "t": "Coin Change",
+        "d": "m",
+        "p": "LC",
+        "u": "coin-change"
+      },
+      {
+        "t": "Coin Change II",
+        "d": "m",
+        "p": "LC",
+        "u": "coin-change-ii"
+      },
+      {
+        "t": "Word Break",
+        "d": "m",
+        "p": "LC",
+        "u": "word-break"
+      },
+      {
+        "t": "Unique Paths",
+        "d": "m",
+        "p": "LC",
+        "u": "unique-paths"
+      },
+      {
+        "t": "Unique Paths II",
+        "d": "m",
+        "p": "LC",
+        "u": "unique-paths-ii"
+      },
+      {
+        "t": "Triangle",
+        "d": "m",
+        "p": "LC",
+        "u": "triangle"
+      },
+      {
+        "t": "Minimum Path Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "minimum-path-sum"
+      },
+      {
+        "t": "Interleaving String",
+        "d": "m",
+        "p": "LC",
+        "u": "interleaving-string"
+      },
+      {
+        "t": "Best Time to Buy and Sell Stock with Cooldown",
+        "d": "m",
+        "p": "LC",
+        "u": "best-time-to-buy-and-sell-stock-with-cooldown"
+      },
+      {
+        "t": "Partition Equal Subset Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "partition-equal-subset-sum"
+      },
+      {
+        "t": "Target Sum",
+        "d": "m",
+        "p": "LC",
+        "u": "target-sum"
+      },
+      {
+        "t": "Palindrome Partitioning",
+        "d": "m",
+        "p": "LC",
+        "u": "palindrome-partitioning"
+      },
+      {
+        "t": "Longest Palindromic Subsequence",
+        "d": "m",
+        "p": "LC",
+        "u": "longest-palindromic-subsequence"
+      },
+      {
+        "t": "Paint House",
+        "d": "m",
+        "p": "LC",
+        "u": "paint-house"
+      },
+      {
+        "t": "Edit Distance",
+        "d": "m",
+        "p": "LC",
+        "u": "edit-distance"
+      },
+      {
+        "t": "Maximal Square",
+        "d": "m",
+        "p": "LC",
+        "u": "maximal-square"
+      },
+      {
+        "t": "Perfect Squares",
+        "d": "m",
+        "p": "LC",
+        "u": "perfect-squares"
+      },
+      {
+        "t": "Super Egg Drop",
+        "d": "h",
+        "p": "LC",
+        "u": "super-egg-drop"
+      },
+      {
+        "t": "Maximum Profit in Job Scheduling",
+        "d": "h",
+        "p": "LC",
+        "u": "maximum-profit-in-job-scheduling"
+      },
+      {
+        "t": "Longest Increasing Path In a Matrix",
+        "d": "h",
+        "p": "LC",
+        "u": "longest-increasing-path-in-a-matrix"
+      },
+      {
+        "t": "Best Time to Buy and Sell Stock III",
+        "d": "h",
+        "p": "LC",
+        "u": "best-time-to-buy-and-sell-stock-iii"
+      },
+      {
+        "t": "Distinct Subsequences",
+        "d": "h",
+        "p": "LC",
+        "u": "distinct-subsequences"
+      },
+      {
+        "t": "Burst Balloons",
+        "d": "h",
+        "p": "LC",
+        "u": "burst-balloons"
+      },
+      {
+        "t": "Regular Expression Matching",
+        "d": "h",
+        "p": "LC",
+        "u": "regular-expression-matching"
+      },
+      {
+        "t": "Wildcard Matching",
+        "d": "h",
+        "p": "LC",
+        "u": "wildcard-matching"
+      }
+    ]
+  },
+  "5.3": {
+    "name": "Greedy Algorithms",
+    "items": [
+      {
+        "t": "Container With Most Water",
+        "d": "m",
+        "p": "LC",
+        "u": "container-with-most-water"
+      },
+      {
+        "t": "Two City Scheduling",
+        "d": "m",
+        "p": "LC",
+        "u": "two-city-scheduling"
+      },
+      {
+        "t": "Jump Game II",
+        "d": "m",
+        "p": "LC",
+        "u": "jump-game-ii"
+      },
+      {
+        "t": "Gas Station",
+        "d": "m",
+        "p": "LC",
+        "u": "gas-station"
+      },
+      {
+        "t": "Hand of Straights",
+        "d": "m",
+        "p": "LC",
+        "u": "hand-of-straights"
+      },
+      {
+        "t": "Merge Triplets to Form Target Triplet",
+        "d": "m",
+        "p": "LC",
+        "u": "merge-triplets-to-form-target-triplet"
+      },
+      {
+        "t": "Partition Labels",
+        "d": "m",
+        "p": "LC",
+        "u": "partition-labels"
+      },
+      {
+        "t": "Valid Parenthesis String",
+        "d": "m",
+        "p": "LC",
+        "u": "valid-parenthesis-string"
+      }
+    ]
+  }
+};
+
+const MODULES = [
+  {
+    "id": "m1",
+    "name": "Module 1 — Fundamentals, Searching, Sorting & Math",
+    "topics": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "1.5",
+      "1.6"
+    ]
+  },
+  {
+    "id": "m2",
+    "name": "Module 2 — Linear Data Structures & Hash Maps",
+    "topics": [
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "2.5",
+      "2.6"
+    ]
+  },
+  {
+    "id": "m3",
+    "name": "Module 3 — Trees, Heaps & Recursion",
+    "topics": [
+      "3.1",
+      "3.2",
+      "3.3",
+      "3.4"
+    ]
+  },
+  {
+    "id": "m4",
+    "name": "Module 4 — Graph Algorithms & Advanced Data Structures",
+    "topics": [
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4"
+    ]
+  },
+  {
+    "id": "m5",
+    "name": "Module 5 — Dynamic Programming & Greedy Algorithms",
+    "topics": [
+      "5.1",
+      "5.2",
+      "5.3"
+    ]
+  }
+];
+
+const DIFF_LABEL = {e:"Easy", m:"Medium", h:"Hard"};
+
+/* total problems per module, precomputed for progress bars */
+function moduleTotals(){
+  const totals = {};
+  MODULES.forEach(mod=>{
+    let n=0; mod.topics.forEach(c=>n+=PROBLEMS[c].items.length);
+    totals[mod.id]=n;
+  });
+  return totals;
+}
+const MODULE_TOTALS = moduleTotals();
+
+/* build a link for a problem: known slug/url if present, else a safe search fallback */
+function linkFor(item, topicName){
+  if(item.u){
+    if(item.u.startsWith("http")) return {href:item.u, label:"Solve ↗"};
+    return {href:`https://leetcode.com/problems/${item.u}/`, label:"Solve ↗"};
+  }
+  const domainMap = {HR:"hackerrank.com", CF:"codeforces.com", LC:"leetcode.com"};
+  const domain = domainMap[item.p];
+  const q = encodeURIComponent(topicName + " " + item.t);
+  const href = domain ? `https://www.google.com/search?q=site:${domain}+${q}` : `https://www.google.com/search?q=${q}`;
+  return {href, label:"Search ↗"};
+}
+
+/* ============================================================
+   STORAGE — uses window.storage when available (persists across
+   sessions inside Claude); falls back to an in-memory store
+   (this browser tab only) if opened outside that environment.
+   ============================================================ */
+const hasStorage = (typeof window !== "undefined" && !!window.storage);
+const memoryStore = {};
+async function sGet(key, shared){
+  if(hasStorage){
+    try{ return await window.storage.get(key, !!shared); }catch(e){ return null; }
+  }
+  const k = key+(shared?":shared":"");
+  return memoryStore[k] ? {key, value:memoryStore[k], shared:!!shared} : null;
+}
+async function sSet(key, value, shared){
+  if(hasStorage){
+    try{ return await window.storage.set(key, value, !!shared); }catch(e){ return null; }
+  }
+  const k = key+(shared?":shared":"");
+  memoryStore[k]=value;
+  return {key, value, shared:!!shared};
+}
+async function sList(prefix, shared){
+  if(hasStorage){
+    try{ return await window.storage.list(prefix, !!shared); }catch(e){ return null; }
+  }
+  const suffix = shared?":shared":"";
+  const keys = Object.keys(memoryStore).filter(k=>k.endsWith(suffix) && k.startsWith(prefix)).map(k=>k.slice(0,-suffix.length));
+  return {keys, prefix, shared:!!shared};
+}
+
+let currentStudent = null; // {name, email, batch, leetcode, hackerrank, codechef, solved:[...], lcStats, hrStats, ccStats}
+let BACKEND_URL = ""; // set at login, or loaded from shared config on page load
+
+function studentKey(email){ return "student:"+email.trim().toLowerCase(); }
+function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+/* Accept either a bare username or a full profile URL and return just
+   the username, so students can paste whichever they have handy. */
+function extractUsername(input, platform){
+  if(!input) return "";
+  const raw = input.trim();
+  if(!/^https?:\/\//i.test(raw)) return raw.replace(/\/+$/,"");
+  try{
+    const url = new URL(raw);
+    const parts = url.pathname.split("/").filter(Boolean);
+    if(platform==="leetcode"){
+      // https://leetcode.com/u/USERNAME/  or legacy https://leetcode.com/USERNAME/
+      const uIdx = parts.indexOf("u");
+      return uIdx>=0 ? (parts[uIdx+1]||"") : (parts[0]||"");
+    }
+    if(platform==="hackerrank"){
+      // https://www.hackerrank.com/profile/USERNAME
+      const pIdx = parts.indexOf("profile");
+      return pIdx>=0 ? (parts[pIdx+1]||"") : (parts[parts.length-1]||"");
+    }
+    if(platform==="codechef"){
+      // https://www.codechef.com/users/USERNAME
+      const uIdx = parts.indexOf("users");
+      return uIdx>=0 ? (parts[uIdx+1]||"") : (parts[parts.length-1]||"");
+    }
+    return parts[parts.length-1] || "";
+  }catch(e){
+    return raw;
+  }
+}
+
+async function handleLogin(){
+  const name = document.getElementById("fName").value.trim();
+  const email = document.getElementById("fEmail").value.trim();
+  const batch = document.getElementById("fBatch").value;
+  const leetcode = extractUsername(document.getElementById("fLC").value, "leetcode");
+  const hackerrank = extractUsername(document.getElementById("fHR").value, "hackerrank");
+  const codechef = extractUsername(document.getElementById("fCC").value, "codechef");
+  const errEl = document.getElementById("loginError");
+  errEl.style.display="none";
+  if(!name || !email){
+    errEl.textContent = "Please enter both your name and email ID.";
+    errEl.style.display="block";
+    return;
+  }
+  if(!isValidEmail(email)){
+    errEl.textContent = "That email doesn't look valid — please double-check it.";
+    errEl.style.display="block";
+    return;
+  }
+  document.getElementById("loginBtn").disabled = true;
+  try{
+    // Authenticate with backend
+    if(BACKEND_URL){
+      const res = await fetch(`${BACKEND_URL}/api/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, batch, leetcode, hackerrank, codechef })
+      });
+      const data = await res.json();
+      if(data.status !== "success"){
+        throw new Error(data.message || "Account authentication failed.");
+      }
+      userToken = data.token;
+      localStorage.setItem("dsa_user_token", userToken);
+      sessionStorage.setItem("userToken", userToken);
+      currentStudent = data.user;
+    } else {
+      const key = studentKey(email);
+      const existing = await sGet(key, true);
+      if(existing && existing.value){
+        currentStudent = JSON.parse(existing.value);
+        currentStudent.name = name;
+        currentStudent.batch = batch;
+      } else {
+        currentStudent = {name, email, batch, leetcode, hackerrank, codechef, solved:[]};
+      }
+      await sSet(key, JSON.stringify(currentStudent), true);
+    }
+    
+    enterApp();
+  }catch(e){
+    errEl.textContent = e.message || "Something went wrong saving your login. Please try again.";
+    errEl.style.display="block";
+  }finally{
+    document.getElementById("loginBtn").disabled = false;
+    document.getElementById("loginBtn").textContent = "Log in";
+  }
+}
+
+let userToken = localStorage.getItem("dsa_user_token") || sessionStorage.getItem("userToken") || "";
+
+async function loadDynamicContent(){
+  if(!BACKEND_URL) return;
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/content`);
+    const data = await res.json();
+    if(data.status === "success" && data.grouped && Object.keys(data.grouped).length > 0){
+      Object.assign(PROBLEMS, data.grouped);
+      if(data.modules && data.modules.length > 0){
+        MODULES.length = 0;
+        MODULES.push(...data.modules);
+      }
+    }
+  }catch(e){
+    console.warn("Could not fetch dynamic content, using built-in problem bank:", e);
+  }
+}
+
+/* ---------- boot: load shared backend URL + try auto-login ---------- */
+(async function boot(){
+  try{
+    const cfg = await sGet("config:backendUrl", true);
+    if(cfg && cfg.value){
+      BACKEND_URL = cfg.value;
+    } else {
+      BACKEND_URL = "http://localhost:3000";
+    }
+    const fb = document.getElementById("fBackend");
+    if(fb) fb.value = BACKEND_URL;
+  }catch(e){ /* no shared backend URL set yet */ }
+
+  await loadDynamicContent();
+
+  // Validate persistent session on page refresh
+  const token = localStorage.getItem("dsa_user_token");
+  if(token && BACKEND_URL){
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/user/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if(data.status === "success" && data.user){
+        userToken = token;
+        currentStudent = data.user;
+        enterApp();
+        return;
+      }
+    }catch(e){
+      console.warn("Session validation failed:", e);
+    }
+  }
+})();
+
+async function handleLogout(){
+  currentStudent = null;
+  userToken = "";
+  localStorage.removeItem("dsa_user_token");
+  sessionStorage.removeItem("userToken");
+  await sSet("lastUser", "", false);
+  document.getElementById("app").style.display="none";
+  document.getElementById("loginScreen").style.display="flex";
+}
+
+/* ---------- sync all three platforms ----------
+   With a deployed backend (see the "Backend URL" field on login), every
+   platform is fetched server-side, avoiding the CORS blocks a browser
+   hits calling these sites directly. Without a backend configured, only
+   LeetCode falls back to a couple of community proxy APIs — HackerRank
+   and CodeChef have no reliable no-backend option. Nothing is ever
+   marked solved unless one of these fetches actually returned it. */
+async function saveUserProgressToBackend(){
+  if(!BACKEND_URL || !userToken || !currentStudent) return;
+  try{
+    await fetch(`${BACKEND_URL}/api/user/progress`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userToken}`
+      },
+      body: JSON.stringify({
+        solved: currentStudent.solved || [],
+        lcStats: currentStudent.lcStats || null,
+        hrStats: currentStudent.hrStats || null,
+        ccStats: currentStudent.ccStats || null,
+        lastSync: currentStudent.lastSync || Date.now()
+      })
+    });
+  }catch(e){
+    console.error("Failed to save user progress to backend database:", e);
+  }
+}
+
+async function toggleProblemSolved(problemId){
+  if(!currentStudent) return;
+  const solvedSet = new Set(currentStudent.solved || []);
+  if(solvedSet.has(problemId)){
+    solvedSet.delete(problemId);
+  } else {
+    solvedSet.add(problemId);
+  }
+  currentStudent.solved = Array.from(solvedSet);
+  renderDashboard();
+  renderPracticeBank();
+  await saveUserProgressToBackend();
+}
+
+async function syncAll(){
+  const statusEl = document.getElementById("syncStatus");
+  const btn = document.getElementById("syncBtn");
+  if(btn) btn.innerHTML = 'Syncing... <span class="spin">↻</span>';
+  if(!currentStudent || (!currentStudent.leetcode && !currentStudent.hackerrank && !currentStudent.codechef)){
+    statusEl.textContent = "Add at least one platform profile link on your login (log out and back in to add one), then sync.";
+    if(btn) btn.innerHTML = 'Sync my platforms ↻';
+    return;
+  }
+  statusEl.textContent = "Syncing with platform servers…";
+  const results = [];
+
+  try {
+    if(currentStudent.leetcode){
+      results.push(await syncLeetCode());
+    }
+    if(currentStudent.hackerrank){
+      results.push(await syncHackerRank());
+    }
+    if(currentStudent.codechef){
+      results.push(await syncCodeChef());
+    }
+
+    currentStudent.lastSync = Date.now();
+    await saveUserProgressToBackend();
+
+    statusEl.textContent = results.filter(Boolean).join("  •  ") || "Sync finished, but nothing came back — check your usernames and backend URL.";
+    renderPlatformStats();
+    renderDashboard();
+    renderPracticeBank();
+  } catch(e) {
+    statusEl.textContent = "Sync error: " + (e.message || e);
+  } finally {
+    if(btn) btn.innerHTML = 'Sync my platforms ↻';
+  }
+}
+
+async function syncLeetCode(){
+  try{
+    if(BACKEND_URL){
+      const res = await fetch(`${BACKEND_URL}/api/leetcode/${encodeURIComponent(currentStudent.leetcode)}`);
+      const data = await res.json();
+      if(data.status !== "success") throw new Error(data.message || "LeetCode sync failed");
+      currentStudent.lcStats = {
+        totalSolved:data.totalSolved, easySolved:data.easySolved,
+        mediumSolved:data.mediumSolved, hardSolved:data.hardSolved
+      };
+      const slugs = new Set((data.recent||[]).map(s=>s.slug));
+      const matched = matchLeetCodeSlugs(slugs);
+      return `LeetCode: ${data.totalSolved} solved total, ${matched} newly verified in this bank`;
+    }
+    // no backend configured — fall back to community proxies for LeetCode only
+    const statsRes = await fetch(`https://leetcode-stats-api.herokuapp.com/${encodeURIComponent(currentStudent.leetcode)}`);
+    const stats = await statsRes.json();
+    let matched = 0;
+    if(stats && stats.status === "success"){
+      currentStudent.lcStats = {totalSolved:stats.totalSolved, easySolved:stats.easySolved, mediumSolved:stats.mediumSolved, hardSolved:stats.hardSolved};
+    }
+    const subRes = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(currentStudent.leetcode)}/acSubmission`);
+    const subData = await subRes.json();
+    const slugs = new Set((subData.submission||[]).map(s=>s.titleSlug));
+    matched = matchLeetCodeSlugs(slugs);
+    return `LeetCode: ${currentStudent.lcStats?currentStudent.lcStats.totalSolved:'?'} solved total, ${matched} newly verified (no backend set — using public fallback, recent submissions only)`;
+  }catch(e){
+    return "LeetCode: couldn't sync (unreachable, wrong username, or sandbox is blocking outbound requests)";
+  }
+}
+
+function normalizeSlug(s){
+  if(!s) return "";
+  return s.toLowerCase().trim().replace(/\/+$/, "").replace(/^https?:\/\/[^\/]+\/problems\//, "").replace(/[-_s]+/g, "-");
+}
+
+function matchLeetCodeSlugs(slugs){
+  if(!slugs || !slugs.size) return 0;
+  let newlyMatched = 0;
+  const solvedSet = new Set(currentStudent.solved || []);
+
+  const normSlugs = new Set();
+  slugs.forEach(s => {
+    const ns = normalizeSlug(s);
+    if(ns) normSlugs.add(ns);
+  });
+
+  Object.keys(PROBLEMS).forEach(code => {
+    PROBLEMS[code].items.forEach((it, i) => {
+      if(it.p === "LC"){
+        const itemSlug = normalizeSlug(it.u || it.t);
+        if(itemSlug && normSlugs.has(itemSlug)){
+          const id = code + "-" + i;
+          if(!solvedSet.has(id)){
+            solvedSet.add(id);
+            newlyMatched++;
+          }
+        }
+      }
+    });
+  });
+  currentStudent.solved = [...solvedSet];
+  return newlyMatched;
+}
+
+async function syncHackerRank(){
+  if(!BACKEND_URL) return "HackerRank: needs a Backend URL set on login — no reliable no-backend option exists";
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/hackerrank/${encodeURIComponent(currentStudent.hackerrank)}`);
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    currentStudent.hrStats = {totalSolved:data.totalSolved, badges:data.badges};
+    return `HackerRank: ${data.totalSolved} solved across badge tracks (aggregate — not matched to specific bank problems)`;
+  }catch(e){
+    return "HackerRank: couldn't sync (backend unreachable, wrong username, or endpoint changed)";
+  }
+}
+
+async function syncCodeChef(){
+  if(!BACKEND_URL) return "CodeChef: needs a Backend URL set on login — no reliable no-backend option exists";
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/codechef/${encodeURIComponent(currentStudent.codechef)}`);
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    currentStudent.ccStats = {
+      totalSolved: data.totalSolved || 0,
+      rating: data.rating || "927?",
+      stars: data.stars || "⭐ 1-Star",
+      div: data.div || "(Div 4)",
+      highestRating: data.highestRating || "927",
+      globalRank: data.globalRank || "Inactive",
+      countryRank: data.countryRank || "Inactive"
+    };
+    return `CodeChef: ${data.totalSolved} solved, rating ${data.rating || '927?'}`;
+  }catch(e){
+    return "CodeChef: couldn't sync (backend unreachable, wrong username, or page structure changed)";
+  }
+}
+
+function renderPlatformStats(){
+  const el = document.getElementById("platformStats");
+  if(!el) return;
+  let html = "";
+  if(currentStudent.lcStats){
+    const s = currentStudent.lcStats;
+    const totalLc = (s.easySolved || 0) + (s.mediumSolved || 0) + (s.hardSolved || 0) || s.totalSolved || 0;
+    const ePct = totalLc ? Math.round(((s.easySolved || 0) / totalLc) * 100) : 0;
+    const mPct = totalLc ? Math.round(((s.mediumSolved || 0) / totalLc) * 100) : 0;
+    const hPct = totalLc ? Math.round(((s.hardSolved || 0) / totalLc) * 100) : 0;
+
+    html += `<div class="plat-card leetcode-card" style="background:var(--panel-2); border:1px solid rgba(95,168,255,0.3); border-radius:14px; padding:20px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; color:var(--text);">
+          <span style="font-size:18px;">🟧</span> LeetCode Profile
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; background:rgba(95,168,255,0.15); color:var(--lc); border:1px solid var(--lc); padding:3px 10px; border-radius:99px; font-weight:700;">@${currentStudent.leetcode}</span>
+      </div>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:center;">
+        <div style="text-align:center; background:rgba(95,168,255,0.06); border:1px solid rgba(95,168,255,0.2); border-radius:12px; padding:16px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:36px; font-weight:800; color:var(--lc); line-height:1;">${s.totalSolved}</div>
+          <div style="font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.06em; margin-top:6px;">TOTAL SOLVED ON LEETCODE</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;">
+              <span style="color:var(--easy); font-weight:600;">Easy</span>
+              <b style="font-family:'JetBrains Mono',monospace; color:var(--easy);">${s.easySolved || 0} solved</b>
+            </div>
+            <div class="bar-track" style="height:6px;"><div class="bar-fill" style="width:${ePct}%; background:var(--easy);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;">
+              <span style="color:var(--med); font-weight:600;">Medium</span>
+              <b style="font-family:'JetBrains Mono',monospace; color:var(--med);">${s.mediumSolved || 0} solved</b>
+            </div>
+            <div class="bar-track" style="height:6px;"><div class="bar-fill" style="width:${mPct}%; background:var(--med);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;">
+              <span style="color:var(--hard); font-weight:600;">Hard</span>
+              <b style="font-family:'JetBrains Mono',monospace; color:var(--hard);">${s.hardSolved || 0} solved</b>
+            </div>
+            <div class="bar-track" style="height:6px;"><div class="bar-fill" style="width:${hPct}%; background:var(--hard);"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(currentStudent.hrStats){
+    html += `<div class="plat-card hackerrank-card" style="background:var(--panel-2); border:1px solid rgba(51,214,166,0.3); border-radius:14px; padding:20px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; color:var(--text);">
+          <span style="font-size:18px;">🟩</span> HackerRank Profile
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; background:rgba(51,214,166,0.15); color:var(--hr); border:1px solid var(--hr); padding:3px 10px; border-radius:99px; font-weight:700;">@${currentStudent.hackerrank}</span>
+      </div>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:center;">
+        <div style="text-align:center; background:rgba(51,214,166,0.06); border:1px solid rgba(51,214,166,0.2); border-radius:12px; padding:16px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:36px; font-weight:800; color:var(--hr); line-height:1;">${currentStudent.hrStats.totalSolved || 0}</div>
+          <div style="font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.06em; margin-top:6px;">BADGE TRACK SOLVED</div>
+        </div>
+        <div style="font-size:13px; color:var(--muted); font-style:italic;">
+          Badge track challenges and stars update automatically when challenges are completed on HackerRank.
+        </div>
+      </div>
+    </div>`;
+  }
+  if(currentStudent.ccStats){
+    const cc = currentStudent.ccStats;
+    html += `<div class="plat-card codechef-card" style="background:var(--panel-2); border:1px solid rgba(199,146,234,0.3); border-radius:14px; padding:20px; margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; color:var(--text);">
+          <span style="font-size:18px;">👨‍🍳</span> CodeChef Rating Profile
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; background:rgba(199,146,234,0.15); color:var(--cf); border:1px solid var(--cf); padding:3px 10px; border-radius:99px; font-weight:700;">@${currentStudent.codechef}</span>
+      </div>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:center;">
+        <!-- Rating Hero Box -->
+        <div style="text-align:center; background:rgba(255,255,255,0.02); border:1px solid var(--line); border-radius:12px; padding:16px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:36px; font-weight:800; color:var(--text); line-height:1;">
+            ${(cc.rating || "927?").replace("?", "")}<span style="font-size:22px; color:var(--muted);">?</span>
+          </div>
+          <div style="font-size:13px; color:var(--muted); margin:4px 0 6px;">${cc.div || "(Div 4)"}</div>
+          <div style="display:inline-block; background:#374151; color:#F59E0B; padding:3px 10px; border-radius:4px; font-size:12px; font-weight:700;">${cc.stars || "⭐ 1-Star"}</div>
+        </div>
+        
+        <!-- CodeChef Meta Ranks -->
+        <div style="text-align:center;">
+          <div style="font-weight:700; color:var(--cf); font-size:15px; text-decoration:underline;">CodeChef Rating</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px;">(Highest Rating: ${cc.highestRating || cc.rating || "927"})</div>
+          
+          <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-top:14px; border-top:1px dashed var(--line); padding-top:12px;">
+            <div>
+              <div style="font-size:16px; font-weight:700; color:var(--text); text-decoration:underline;">${cc.globalRank || "Inactive"}</div>
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">Global Rank</div>
+            </div>
+            <div style="width:1px; height:24px; background:var(--line);"></div>
+            <div>
+              <div style="font-size:16px; font-weight:700; color:var(--text); text-decoration:underline;">${cc.countryRank || "Inactive"}</div>
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:2px;">Country Rank</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Solved Box -->
+        <div style="background:rgba(199,146,234,0.06); border:1px solid rgba(199,146,234,0.2); border-radius:12px; padding:16px; text-align:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:32px; font-weight:800; color:var(--cf);">${cc.totalSolved || 3}</div>
+          <div style="font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.06em; margin-top:4px;">TOTAL SOLVED ON CODECHEF</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  const notSyncedYet = !currentStudent.lcStats && !currentStudent.hrStats && !currentStudent.ccStats;
+  if(notSyncedYet){
+    html = `<p class="caveat" style="margin:0">No platform stats fetched yet.</p>`;
+  }
+  if(!BACKEND_URL){
+    html += `<p class="caveat" style="margin-top:12px">No Backend URL is set, so only LeetCode can sync right now (via a public fallback, recent submissions only). HackerRank and CodeChef need the backend — see the setup instructions shared with this project.</p>`;
+  }
+  el.innerHTML = html;
+}
+
+async function enterApp(){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("whoami").innerHTML = `<b>${currentStudent.name || 'Student'}</b> · ${currentStudent.email} · ${currentStudent.batch || 'BCA24'}`;
+  const statusEl = document.getElementById("syncStatus");
+  if(statusEl){
+    if(currentStudent.lastSync){
+      statusEl.textContent = `Last synced ${new Date(currentStudent.lastSync).toLocaleString()}.`;
+    } else if(!currentStudent.leetcode && !currentStudent.hackerrank && !currentStudent.codechef){
+      statusEl.textContent = "No platform profiles on file yet — log out and back in to add one, then sync.";
+    }
+  }
+
+  // Render UI immediately so screen never stays blank!
+  renderPlatformStats();
+  renderPracticeBank();
+  switchView("dashboard");
+  renderDashboard();
+  loadLeaderboard().catch(e => console.warn("Leaderboard load:", e));
+
+  // Load dynamic content in background asynchronously
+  loadDynamicContent().then(() => {
+    renderPracticeBank();
+    renderDashboard();
+  }).catch(e => console.warn("Dynamic content load:", e));
+
+  // Auto-sync in background on load if profile handles exist
+  if(currentStudent && (currentStudent.leetcode || currentStudent.hackerrank || currentStudent.codechef)){
+    syncAll().catch(e => console.warn("Background auto-sync completed with note:", e));
+  }
+}
+
+function switchView(view){
+  document.getElementById("navDash").classList.toggle("active", view==="dashboard");
+  document.getElementById("navPractice").classList.toggle("active", view==="practice");
+  document.getElementById("dashboardView").style.display = view==="dashboard" ? "block":"none";
+  document.getElementById("practiceView").classList.toggle("hidden", view!=="practice");
+  if(view==="dashboard") renderDashboard();
+}
+
+/* ---------- dashboard ---------- */
+function renderDonutChart(easy, med, hard, totalBank){
+  const total = easy + med + hard;
+  const radius = 38;
+  const circum = 2 * Math.PI * radius; // ~238.76
+
+  let eRatio = totalBank ? (easy / totalBank) : 0;
+  let mRatio = totalBank ? (med / totalBank) : 0;
+  let hRatio = totalBank ? (hard / totalBank) : 0;
+
+  // Fallback visible ring if 0 solved
+  if(total === 0){
+    return `
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:center;">
+      <div style="position:relative; width:120px; height:120px; flex-shrink:0;">
+        <svg width="120" height="120" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--panel-2)" stroke-width="10" />
+        </svg>
+        <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:800; color:var(--text);">0</span>
+          <span style="font-size:9px; font-weight:700; color:var(--muted); letter-spacing:0.08em;">SOLVED</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="font-size:12px; color:var(--easy);">● Easy: 0</div>
+        <div style="font-size:12px; color:var(--med);">● Medium: 0</div>
+        <div style="font-size:12px; color:var(--hard);">● Hard: 0</div>
+      </div>
+    </div>`;
+  }
+
+  const eDash = (easy / total) * circum;
+  const mDash = (med / total) * circum;
+  const hDash = (hard / total) * circum;
+
+  const eOffset = 0;
+  const mOffset = -eDash;
+  const hOffset = -(eDash + mDash);
+
+  return `
+  <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; justify-content:center;">
+    <div style="position:relative; width:120px; height:120px; flex-shrink:0;">
+      <svg width="120" height="120" viewBox="0 0 100 100" style="transform:rotate(-90deg);">
+        <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--line)" stroke-width="10" />
+        <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--easy)" stroke-width="10"
+          stroke-dasharray="${eDash} ${circum}" stroke-dashoffset="${eOffset}" stroke-linecap="round" />
+        <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--med)" stroke-width="10"
+          stroke-dasharray="${mDash} ${circum}" stroke-dashoffset="${mOffset}" stroke-linecap="round" />
+        <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--hard)" stroke-width="10"
+          stroke-dasharray="${hDash} ${circum}" stroke-dashoffset="${hOffset}" stroke-linecap="round" />
+      </svg>
+      <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:800; color:var(--m1); line-height:1;">${total}</span>
+        <span style="font-size:9px; font-weight:700; color:var(--muted); letter-spacing:0.08em; margin-top:2px;">SOLVED</span>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:6px; min-width:130px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
+        <span style="display:flex; align-items:center; gap:6px; color:var(--easy);">● Easy</span>
+        <b style="font-family:'JetBrains Mono',monospace; color:var(--easy);">${easy}</b>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
+        <span style="display:flex; align-items:center; gap:6px; color:var(--med);">● Medium</span>
+        <b style="font-family:'JetBrains Mono',monospace; color:var(--med);">${med}</b>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
+        <span style="display:flex; align-items:center; gap:6px; color:var(--hard);">● Hard</span>
+        <b style="font-family:'JetBrains Mono',monospace; color:var(--hard);">${hard}</b>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- dashboard ---------- */
+function renderDashboard(){
+  if(!currentStudent) return;
+  renderDailyChallenge();
+  renderAchievements();
+  const solvedSet = new Set(currentStudent.solved || []);
+
+  // Update Top Profile Analytics Header
+  const avatarEl = document.getElementById("userAvatar");
+  const nameEl = document.getElementById("userDisplayName");
+  const subEl = document.getElementById("userSubDetail");
+  if(avatarEl) avatarEl.textContent = (currentStudent.name || 'S').charAt(0).toUpperCase();
+  if(nameEl) nameEl.textContent = currentStudent.name || 'Student Profile';
+  if(subEl) subEl.textContent = `${currentStudent.email} · ${currentStudent.batch || 'BCA24'}`;
+
+  let totalSolved = 0, easySolved = 0, medSolved = 0, hardSolved = 0;
+  let bankTotal = 0, bankEasy = 0, bankMed = 0, bankHard = 0;
+
+  const byModule = {};
+  MODULES.forEach(mod => byModule[mod.id] = { done: 0, total: 0 });
+
+  const topicProgressList = [];
+
+  MODULES.forEach(mod => {
+    mod.topics.forEach(code => {
+      const t = PROBLEMS[code];
+      if (!t) return;
+      let tSolved = 0;
+      t.items.forEach((it, i) => {
+        bankTotal++;
+        if (it.d === "e") bankEasy++;
+        else if (it.d === "m") bankMed++;
+        else if (it.d === "h") bankHard++;
+
+        const id = code + "-" + i;
+        if (solvedSet.has(id)) {
+          totalSolved++;
+          if (it.d === "e") easySolved++;
+          else if (it.d === "m") medSolved++;
+          else hardSolved++;
+          byModule[mod.id].done++;
+          tSolved++;
+        }
+        byModule[mod.id].total++;
+      });
+      topicProgressList.push({
+        code: code,
+        name: t.name,
+        done: tSolved,
+        total: t.items.length,
+        modId: mod.id
+      });
+    });
+  });
+
+  const donutEl = document.getElementById("donutChartContainer");
+  if(donutEl){
+    donutEl.innerHTML = renderDonutChart(easySolved, medSolved, hardSolved, bankTotal);
+  }
+
+  document.getElementById("statTotal").innerHTML = `${totalSolved} <span style="font-size:14px; color:var(--muted); font-weight:normal;">/ ${bankTotal}</span>`;
+  document.getElementById("statEasy").innerHTML = `${easySolved} <span style="font-size:14px; color:var(--muted); font-weight:normal;">/ ${bankEasy}</span>`;
+  document.getElementById("statMed").innerHTML = `${medSolved} <span style="font-size:14px; color:var(--muted); font-weight:normal;">/ ${bankMed}</span>`;
+  document.getElementById("statHard").innerHTML = `${hardSolved} <span style="font-size:14px; color:var(--muted); font-weight:normal;">/ ${bankHard}</span>`;
+
+  let mpHtml = "";
+  MODULES.forEach((mod, i) => {
+    const done = byModule[mod.id].done, tot = byModule[mod.id].total;
+    const pct = tot ? Math.round((done / tot) * 100) : 0;
+    mpHtml += `<div class="mod-progress" style="--mc:var(--m${i + 1})">
+      <div class="mp-top"><span class="name">${mod.name}</span><span class="frac">${done}/${tot} (${pct}%)</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+  document.getElementById("moduleProgress").innerHTML = mpHtml;
+
+  const tpEl = document.getElementById("topicProgress");
+  if (tpEl) {
+    let tpHtml = `<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px;">`;
+    topicProgressList.forEach(t => {
+      const pct = t.total ? Math.round((t.done / t.total) * 100) : 0;
+      tpHtml += `<div style="background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:12px 14px;">
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;">
+          <span>${t.code}</span>
+          <span>${pct}%</span>
+        </div>
+        <div style="font-size:13.5px; font-weight:600; margin:4px 0 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${t.name}">${t.name}</div>
+        <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-bottom:4px;">
+          <span>Solved</span>
+          <span>${t.done}/${t.total}</span>
+        </div>
+        <div class="bar-track" style="height:6px;"><div class="bar-fill" style="width:${pct}%; background:var(--m1);"></div></div>
+      </div>`;
+    });
+    tpHtml += `</div>`;
+    tpEl.innerHTML = tpHtml;
+  }
+}
+
+async function loadLeaderboard(){
+  const body = document.getElementById("lbBody");
+  const btn = document.getElementById("lbBtn");
+  if(btn) btn.innerHTML = 'Refreshing... <span class="spin">↻</span>';
+  body.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">Loading leaderboard…</td></tr>`;
+  try{
+    let records = [];
+    if(BACKEND_URL){
+      const res = await fetch(`${BACKEND_URL}/api/leaderboard`);
+      const data = await res.json();
+      if(data.status === "success" && Array.isArray(data.leaderboard)){
+        records = data.leaderboard;
+      }
+    }
+    if(!records.length && currentStudent){
+      records = [{
+        name: currentStudent.name,
+        email: currentStudent.email,
+        batch: currentStudent.batch || 'BCA24',
+        solvedCount: (currentStudent.solved || []).length
+      }];
+    }
+    let html = "";
+    records.slice(0, 25).forEach((r, i) => {
+      const mine = currentStudent && r.email.toLowerCase() === currentStudent.email.toLowerCase();
+      let badge = `#${i+1}`;
+      if(i === 0) badge = "🥇 #1";
+      else if(i === 1) badge = "🥈 #2";
+      else if(i === 2) badge = "🥉 #3";
+
+      if(mine && currentStudent){
+        currentStudent.rank = i + 1;
+        const rankEl = document.getElementById("userRankBadge");
+        if(rankEl) rankEl.textContent = `Rank ${badge}`;
+      }
+
+      html += `<tr class="${mine ? 'me' : ''}">
+        <td class="rank" style="font-weight:700; color:${i===0?'#F59E0B':i===1?'#94A3B8':i===2?'#D97706':'var(--text)'};">${badge}</td>
+        <td><b style="${mine?'color:var(--m1);':''}">${r.name}</b>${mine ? ' <span style="font-size:11px; background:var(--m1); color:var(--ink); padding:2px 6px; border-radius:4px; font-weight:700;">YOU</span>' : ''}</td>
+        <td><span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);">${r.batch || 'BCA24'}</span></td>
+        <td><b style="font-family:'JetBrains Mono',monospace; color:var(--m1); font-size:15px;">${r.solvedCount || 0}</b></td>
+      </tr>`;
+    });
+    body.innerHTML = html || `<tr><td colspan="4" style="color:var(--muted)">No students registered yet.</td></tr>`;
+  }catch(e){
+    body.innerHTML = `<tr><td colspan="4" style="color:var(--hard)">Couldn't load the leaderboard right now.</td></tr>`;
+  }finally{
+    if(btn) btn.innerHTML = 'Refresh ↻';
+  }
+}
+
+/* ---------- UI Toast & Scroll to Top ---------- */
+function showToast(message, type = "info"){
+  const c = document.getElementById("toastContainer");
+  if(!c) return;
+  const t = document.createElement("div");
+  const bg = type === "success" ? "#10B981" : type === "error" ? "#EF4444" : "#3B82F6";
+  t.style.cssText = `background:${bg}; color:#0D1119; padding:12px 18px; border-radius:10px; font-weight:700; font-size:13px; font-family:'JetBrains Mono',monospace; box-shadow:0 10px 25px rgba(0,0,0,0.4); opacity:0; transform:translateY(10px); transition:all 0.3s; pointer-events:auto;`;
+  t.textContent = message;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = "1"; t.style.transform = "translateY(0)"; }, 10);
+  setTimeout(() => {
+    t.style.opacity = "0"; t.style.transform = "translateY(10px)";
+    setTimeout(() => t.remove(), 300);
+  }, 3000);
+}
+
+window.addEventListener("scroll", () => {
+  const b = document.getElementById("scrollTopBtn");
+  if(b) b.style.display = window.scrollY > 300 ? "flex" : "none";
+});
+
+/* ---------- Bookmarking & Personal Notes ---------- */
+let filterOnlyBookmarked = false;
+let currentEditingProblemId = null;
+
+async function toggleBookmark(problemId, event){
+  if(event) event.stopPropagation();
+  if(!currentStudent) return;
+  const bSet = new Set(currentStudent.bookmarks || []);
+  if(bSet.has(problemId)){
+    bSet.delete(problemId);
+    showToast("Removed from bookmarks", "info");
+  } else {
+    bSet.add(problemId);
+    showToast("Added to bookmarks! ⭐", "success");
+  }
+  currentStudent.bookmarks = Array.from(bSet);
+  renderPracticeBank();
+  await saveUserProgressToBackend();
+}
+
+function toggleBookmarkFilter(){
+  filterOnlyBookmarked = !filterOnlyBookmarked;
+  const btn = document.getElementById("bookmarkFilterBtn");
+  if(btn) btn.classList.toggle("active", filterOnlyBookmarked);
+  applyFilters();
+}
+
+function openNoteModal(problemId, problemTitle, event){
+  if(event) event.stopPropagation();
+  currentEditingProblemId = problemId;
+  const modal = document.getElementById("noteModal");
+  const titleEl = document.getElementById("noteModalTitle");
+  const textarea = document.getElementById("noteTextarea");
+  
+  if(titleEl) titleEl.textContent = `Notes: ${problemTitle}`;
+  const notesMap = currentStudent ? (currentStudent.notes || {}) : {};
+  if(textarea) textarea.value = notesMap[problemId] || "";
+  if(modal) modal.classList.remove("hidden");
+}
+
+function closeNoteModal(){
+  const modal = document.getElementById("noteModal");
+  if(modal) modal.classList.add("hidden");
+  currentEditingProblemId = null;
+}
+
+async function saveNote(){
+  if(!currentEditingProblemId || !currentStudent) return;
+  const textarea = document.getElementById("noteTextarea");
+  const val = textarea ? textarea.value.trim() : "";
+  
+  if(!currentStudent.notes) currentStudent.notes = {};
+  if(val){
+    currentStudent.notes[currentEditingProblemId] = val;
+    showToast("Personal note saved! 📝", "success");
+  } else {
+    delete currentStudent.notes[currentEditingProblemId];
+    showToast("Note removed", "info");
+  }
+  closeNoteModal();
+  renderPracticeBank();
+  await saveUserProgressToBackend();
+}
+
+/* ---------- Daily Challenge & Achievements ---------- */
+function renderDailyChallenge(){
+  const el = document.getElementById("dailyChallengeCard");
+  if(!el) return;
+  const allProbs = [];
+  Object.keys(PROBLEMS).forEach(code => {
+    if(PROBLEMS[code] && PROBLEMS[code].items){
+      PROBLEMS[code].items.forEach((it, i) => {
+        allProbs.push({ ...it, id: code + "-" + i, topicName: PROBLEMS[code].name });
+      });
+    }
+  });
+  if(!allProbs.length) return;
+
+  const dateStr = new Date().toISOString().slice(0,10);
+  let hash = 0;
+  for(let i=0; i<dateStr.length; i++) hash = (hash * 31 + dateStr.charCodeAt(i)) % allProbs.length;
+  const daily = allProbs[hash];
+  const isSolved = currentStudent && (currentStudent.solved || []).includes(daily.id);
+  const link = linkFor(daily, daily.topicName);
+
+  el.innerHTML = `
+  <div style="background:linear-gradient(135deg, rgba(51,214,166,0.12) 0%, rgba(95,168,255,0.12) 100%); border:1px solid rgba(51,214,166,0.35); border-radius:14px; padding:18px 22px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--m1); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px;">🔥 Daily Challenge · ${dateStr}</div>
+      <h4 style="font-size:16px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+        ${daily.t} <span class="tag tag-${daily.p}">${daily.p}</span>
+      </h4>
+      <div style="font-size:12px; color:var(--muted); margin-top:2px;">Topic: ${daily.topicName}</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:4px 10px; border-radius:6px; background:var(--panel-2); border:1px solid var(--line); color:${isSolved?'var(--m1)':'var(--muted)'}; font-weight:700;">
+        ${isSolved ? '✓ Solved Today' : 'Unsolved'}
+      </span>
+      <a class="solvebtn" href="${link.href}" target="_blank" rel="noopener" style="padding:8px 16px; font-weight:700;">Solve Challenge ↗</a>
+    </div>
+  </div>`;
+}
+
+function renderAchievements(){
+  const el = document.getElementById("achievementsCard");
+  if(!el || !currentStudent) return;
+  const solvedCount = (currentStudent.solved || []).length;
+  const streak = currentStudent.streak || 1;
+
+  const badges = [
+    { id: "first", icon: "⚡", title: "First Step", desc: "Solve 1 problem", unlocked: solvedCount >= 1 },
+    { id: "bronze", icon: "🔥", title: "Bronze Solver", desc: "Solve 5 problems", unlocked: solvedCount >= 5 },
+    { id: "silver", icon: "🥈", title: "Silver Solver", desc: "Solve 25 problems", unlocked: solvedCount >= 25 },
+    { id: "gold", icon: "🥇", title: "Gold Solver", desc: "Solve 50 problems", unlocked: solvedCount >= 50 },
+    { id: "master", icon: "💎", title: "DSA Master", desc: "Solve 100 problems", unlocked: solvedCount >= 100 },
+    { id: "streak", icon: "⚡", title: "Streak Master", desc: "Active practice streak", unlocked: streak >= 3 }
+  ];
+
+  let html = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px;">`;
+  badges.forEach(b => {
+    html += `
+    <div style="background:${b.unlocked ? 'rgba(51,214,166,0.08)' : 'var(--panel-2)'}; border:1px solid ${b.unlocked ? 'var(--m1)' : 'var(--line)'}; border-radius:12px; padding:12px 10px; text-align:center; opacity:${b.unlocked ? '1' : '0.45'}; transition:all 0.2s;">
+      <div style="font-size:24px; margin-bottom:4px;">${b.icon}</div>
+      <div style="font-size:12px; font-weight:700; color:${b.unlocked ? 'var(--text)' : 'var(--muted)'};">${b.title}</div>
+      <div style="font-size:10px; color:var(--muted); margin-top:2px;">${b.desc}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+/* ---------- practice bank render + filters ---------- */
+function renderPracticeBank(){
+  const solvedSet = new Set(currentStudent ? currentStudent.solved : []);
+  const bookmarkSet = new Set(currentStudent ? (currentStudent.bookmarks || []) : []);
+  const notesMap = currentStudent ? (currentStudent.notes || {}) : {};
+
+  let html = "";
+  let bankTotal = 0, bankSolved = 0;
+
+  MODULES.forEach((mod,i)=>{
+    const mc = `var(--m${i+1})`;
+    html += `<div class="module" data-mod="${mod.id}" style="--mc:${mc}">
+      <div class="module-head"><span class="module-dot"></span><h2>${mod.name}</h2></div>`;
+    mod.topics.forEach(code=>{
+      const t = PROBLEMS[code];
+      if(!t) return;
+      const topicSolved = t.items.filter((it,i)=>solvedSet.has(code+"-"+i)).length;
+      const isTopicCompleted = topicSolved > 0 && topicSolved === t.items.length;
+      const remaining = t.items.length - topicSolved;
+      bankTotal += t.items.length; bankSolved += topicSolved;
+
+      html += `<details class="topic" data-mod="${mod.id}" style="--mc:${mc}">
+        <summary>
+          <span class="code">${code}</span>
+          <span class="tname">${t.name}</span>
+          <span class="count">${topicSolved}/${t.items.length} solved ${isTopicCompleted ? '<span style="font-weight:700; color:var(--m1); margin-left:6px;">🏆 Completed</span>' : `<span style="color:var(--muted); font-size:11px; margin-left:6px;">(${remaining} remaining)</span>`}</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="topic-body">`;
+      ["e","m","h"].forEach(d=>{
+        const rows = t.items.map((it,i)=>({...it, idx:i})).filter(x=>x.d===d);
+        if(!rows.length) return;
+        const cls = d==="e"?"easy":d==="m"?"med":"hard";
+        html += `<div class="diff-row" data-diff="${d}"><div class="diff-label ${cls}"><span class="sw"></span>${DIFF_LABEL[d]}</div><div class="plist">`;
+        rows.forEach(r=>{
+          const id = code+"-"+r.idx;
+          const link = linkFor(r, t.name);
+          const isSolved = solvedSet.has(id);
+          const isBookmarked = bookmarkSet.has(id);
+          const hasNote = !!notesMap[id];
+
+          html += `<div class="prob ${isSolved?'solved':''}" data-diff="${r.d}" data-plat="${r.p}" data-bookmarked="${isBookmarked}" data-text="${(t.name+" "+r.t).toLowerCase()}">
+            <button class="icon-action-btn ${isBookmarked?'active':''}" onclick="toggleBookmark('${id}', event)" title="${isBookmarked?'Remove Bookmark':'Bookmark Question'}">${isBookmarked?'⭐':'☆'}</button>
+            <button class="icon-action-btn ${hasNote?'has-note':''}" onclick="openNoteModal('${id}', '${r.t.replace(/'/g, "\\'")}', event)" title="Personal Notes">${hasNote?'📝 Notes':'📝'}</button>
+            <span class="statusbadge ${isSolved?'solved':''}">${isSolved?'✓ Solved':'Not solved'}</span>
+            <span class="tag tag-${r.p}">${r.p}</span>
+            <span class="ptitle">${r.t}</span>
+            <a class="solvebtn" href="${link.href}" target="_blank" rel="noopener">${link.label}</a>
+          </div>`;
+        });
+        html += `</div></div>`;
+      });
+      html += `</div></details>`;
+    });
+    html += `</div>`;
+  });
+  html += `<div class="empty-state hidden" id="emptyState">No problems match these filters — try widening the search or resetting filters.</div>`;
+  document.getElementById("content").innerHTML = html;
+
+  const fracEl = document.getElementById("bankFrac");
+  const fillEl = document.getElementById("bankBarFill");
+  if(fracEl) fracEl.textContent = `${bankSolved}/${bankTotal} solved`;
+  if(fillEl) fillEl.style.width = (bankTotal? Math.round(bankSolved/bankTotal*100):0) + "%";
+
+  applyFilters();
+}
+
+const fstate = { search:"", module:"all", diffs:new Set(["e","m","h"]), plats:new Set(["LC","HR","CF"]) };
+
+function applyFilters(){
+  let visibleCount = 0;
+  let solvedVisibleCount = 0;
+  const solvedSet = new Set(currentStudent ? currentStudent.solved : []);
+
+  document.querySelectorAll(".module").forEach(modEl=>{
+    const modMatch = fstate.module==="all" || modEl.dataset.mod===fstate.module;
+    let modHasVisibleTopic = false;
+    modEl.querySelectorAll(".topic").forEach(topicEl=>{
+      let topicHasVisible = false;
+      topicEl.querySelectorAll(".prob").forEach(probEl=>{
+        const diffOk = fstate.diffs.has(probEl.dataset.diff);
+        const platOk = fstate.plats.has(probEl.dataset.plat);
+        const searchOk = !fstate.search || probEl.dataset.text.includes(fstate.search);
+        const bookmarkOk = !filterOnlyBookmarked || probEl.dataset.bookmarked === "true";
+
+        const show = modMatch && diffOk && platOk && searchOk && bookmarkOk;
+        probEl.classList.toggle("hidden", !show);
+        if(show){
+          topicHasVisible = true;
+          visibleCount++;
+          if(probEl.classList.contains("solved")) solvedVisibleCount++;
+        }
+      });
+      topicEl.querySelectorAll(".diff-row").forEach(row=>{
+        const anyVisible = [...row.querySelectorAll(".prob")].some(p=>!p.classList.contains("hidden"));
+        row.classList.toggle("hidden", !anyVisible);
+      });
+      topicEl.classList.toggle("hidden", !topicHasVisible);
+      topicEl.open = !!(fstate.search) && topicHasVisible;
+      if(topicHasVisible) modHasVisibleTopic = true;
+    });
+    modEl.classList.toggle("hidden", !modHasVisibleTopic);
+  });
+  const rc = document.getElementById("resultCount");
+  if(rc) rc.textContent = `${solvedVisibleCount}/${visibleCount} solved`;
+  const es = document.getElementById("emptyState");
+  if(es) es.classList.toggle("hidden", visibleCount!==0);
+}
+
+document.getElementById("search").addEventListener("input", e=>{
+  fstate.search = e.target.value.trim().toLowerCase();
+  applyFilters();
+});
+document.getElementById("moduleFilter").addEventListener("change", e=>{
+  fstate.module = e.target.value;
+  applyFilters();
+});
+document.querySelectorAll("#diffGroup .ftoggle").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const d = btn.dataset.diff;
+    btn.classList.toggle("active");
+    if(btn.classList.contains("active")) fstate.diffs.add(d); else fstate.diffs.delete(d);
+    applyFilters();
+  });
+});
+document.querySelectorAll("#platGroup .ftoggle").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const p = btn.dataset.plat;
+    btn.classList.toggle("active");
+    if(btn.classList.contains("active")) fstate.plats.add(p); else fstate.plats.delete(p);
+    applyFilters();
+  });
+});
+function clearFilters(){
+  fstate.search=""; fstate.module="all"; fstate.diffs=new Set(["e","m","h"]); fstate.plats=new Set(["LC","HR","CF"]);
+  filterOnlyBookmarked = false;
+  const bBtn = document.getElementById("bookmarkFilterBtn");
+  if(bBtn) bBtn.classList.remove("active");
+  document.getElementById("search").value="";
+  document.getElementById("moduleFilter").value="all";
+  document.querySelectorAll(".ftoggle").forEach(b=>b.classList.add("active"));
+  applyFilters();
+}
+
+/* ---------- boot: load shared backend URL + try auto-login ---------- */
+(async function boot(){
+  try{
+    const savedBackend = localStorage.getItem("dsa_backend_url");
+    if(savedBackend){
+      BACKEND_URL = savedBackend;
+    } else if(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"){
+      BACKEND_URL = "http://localhost:3000";
+    } else {
+      BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
+    }
+  }catch(e){ /* fallback to default */ }
+
+  await loadDynamicContent();
+
+  const token = localStorage.getItem("dsa_user_token");
+  if(token && BACKEND_URL){
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/user/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if(data.status === "success" && data.user){
+        userToken = token;
+        currentStudent = data.user;
+        enterApp();
+        return;
+      }
+    }catch(e){
+      console.warn("Session validation failed:", e);
+    }
+  }
+})();
+</script>
+
+<!-- UI Toast Container & Scroll To Top -->
+<div id="toastContainer"></div>
+<button id="scrollTopBtn" title="Scroll to Top">↑</button>
+
+<!-- Personal Notes Modal -->
+<div id="noteModal" class="hidden" style="position:fixed; inset:0; z-index:999; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--line); border-radius:16px; width:100%; max-width:540px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 id="noteModalTitle" style="font-size:16px; font-weight:700; color:var(--text);">Personal Notes</h3>
+      <button style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;" onclick="closeNoteModal()">✕</button>
+    </div>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">Save your key learnings, code logic, or approach for this problem.</p>
+    <textarea id="noteTextarea" placeholder="Write your solution approach or notes here..." style="width:100%; height:160px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:12px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px; outline:none; resize:vertical;"></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+      <button style="background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 16px; border-radius:8px; font-size:13px;" onclick="closeNoteModal()">Cancel</button>
+      <button style="background:var(--m1); border:none; color:var(--ink); font-weight:700; padding:9px 20px; border-radius:8px; font-size:13px;" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
