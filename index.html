@@ -178,7 +178,7 @@
 <body>
 
 <!-- ===================== LOGIN ===================== -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:flex;">
   <div class="login-card">
     <div class="eyebrow">practice-tracker --login</div>
     <h1>Sign in to track your practice</h1>
@@ -3105,9 +3105,9 @@ function clearFilters(){
     } else {
       BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
     }
-  }catch(e){ /* fallback to default */ }
+  }catch(e){ /* fallback */ }
 
-  // Non-blocking dynamic load in background
+  // Non-blocking dynamic load
   loadDynamicContent().catch(e => console.warn("Background content load:", e));
 
   const token = localStorage.getItem("dsa_user_token");
@@ -3125,12 +3125,15 @@ function clearFilters(){
       }
     }catch(e){
       console.warn("Session validation failed:", e);
+      localStorage.removeItem("dsa_user_token");
     }
   }
 
-  // Ensure login screen is visible if no saved session
+  // Fail-safe display login screen
   const ls = document.getElementById("loginScreen");
+  const appEl = document.getElementById("app");
   if(ls) ls.style.display = "flex";
+  if(appEl) appEl.style.display = "none";
 })();
 </script>
 
