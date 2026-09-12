@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Practice Tracker — Admin Control Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0D1119; --panel:#161C2A; --panel-2:#1D2536; --line:#2A3348;
+    --text:#E9EDF6; --muted:#8C97AE;
+    --m1:#33D6A6; --m2:#5FA8FF; --m3:#FFB454; --m4:#FF6B6B; --m5:#C792EA;
+    --easy:#33D6A6; --med:#FFB454; --hard:#FF6B6B;
+    --lc:#5FA8FF; --hr:#33D6A6; --cf:#C792EA; --oa:#8C97AE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--text); font-family:'Inter',sans-serif; line-height:1.55; padding-bottom:70px;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:inherit; cursor:pointer;}
+  a{color:inherit;}
+
+  /* ===================== ADMIN LOGIN ===================== */
+  #adminLoginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .login-card{
+    width:100%; max-width:440px; background:var(--panel); border:1px solid var(--line);
+    border-radius:16px; padding:36px 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .login-card .eyebrow{font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--m4); margin-bottom:14px;}
+  .login-card .eyebrow::before{content:"$ sudo "; color:var(--muted);}
+  .login-card h1{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:800; margin-bottom:8px;}
+  .login-card p.sub{color:var(--muted); font-size:13.5px; margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-family:'JetBrains Mono',monospace;}
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:9px;
+    padding:11px 13px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px; outline:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--m2);}
+  #adminLoginBtn{
+    width:100%; margin-top:8px; background:var(--m4); color:var(--ink); border:none; border-radius:9px;
+    padding:13px; font-weight:700; font-size:14.5px; transition: opacity 0.2s;
+  }
+  #adminLoginBtn:hover{opacity:0.9;}
+  #adminLoginError{color:var(--hard); font-size:12.5px; margin-top:10px; display:none;}
+
+  /* ===================== APP SHELL ===================== */
+  #adminApp{display:none;}
+  header.topbar{
+    position:sticky; top:0; z-index:30; background:var(--ink); border-bottom:1px solid var(--line);
+    padding:14px 6vw; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .brand{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:15px;}
+  .brand span{color:var(--m4);}
+  .topbar-actions{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;}
+  .navbtn{
+    background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:9px;
+    padding:9px 14px; font-size:13px; font-family:'JetBrains Mono',monospace; transition:all 0.2s;
+  }
+  .navbtn:hover{background:var(--panel-2);}
+  .navbtn.active{border-color:var(--m4); color:var(--m4);}
+  .navbtn.ghost{background:none; color:var(--muted);}
+  .navbtn.danger{background:rgba(255,107,107,0.1); border-color:var(--m4); color:var(--m4);}
+
+  main{padding:26px 6vw;}
+
+  /* ===================== STAT CARDS & PANELS ===================== */
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:26px;}
+  .stat-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  .stat-card .val{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:800;}
+  .stat-card .lbl{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  .panel-block{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin-bottom:24px;}
+  .panel-block h3{font-size:16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;}
+  
+  /* ===================== TABLES ===================== */
+  table.data-table{width:100%; border-collapse:collapse; font-size:13px;}
+  table.data-table th, table.data-table td{text-align:left; padding:12px 10px; border-bottom:1px solid var(--line);}
+  table.data-table th{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);}
+  table.data-table tr:hover{background:rgba(255,255,255,0.02);}
+
+  .badge{
+    display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px;
+    border-radius:6px; border:1px solid var(--line); text-transform:uppercase; font-weight:600;
+  }
+  .badge.active{background:rgba(51,214,166,0.15); color:var(--m1); border-color:var(--m1);}
+  .badge.disabled{background:rgba(255,107,107,0.15); color:var(--m4); border-color:var(--m4);}
+  .badge.easy{background:rgba(51,214,166,0.15); color:var(--easy); border-color:var(--easy);}
+  .badge.med{background:rgba(255,180,84,0.15); color:var(--med); border-color:var(--med);}
+  .badge.hard{background:rgba(255,107,107,0.15); color:var(--hard); border-color:var(--hard);}
+
+  .btn-sm{
+    padding:5px 10px; font-size:11.5px; border-radius:6px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--text); font-family:'JetBrains Mono',monospace; margin-right:4px;
+  }
+  .btn-sm:hover{border-color:var(--m2); color:var(--m2);}
+  .btn-sm.danger{color:var(--m4);} .btn-sm.danger:hover{border-color:var(--m4); background:rgba(255,107,107,0.1);}
+  .btn-sm.success{color:var(--m1);} .btn-sm.success:hover{border-color:var(--m1); background:rgba(51,214,166,0.1);}
+
+  .filterbar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; align-items:center;}
+  .filterbar input, .filterbar select{
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text); border-radius:8px;
+    padding:9px 12px; font-size:13px; font-family:'Inter',sans-serif; outline:none;
+  }
+
+  /* MODAL */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(13,17,25,0.85); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; width:100%; max-width:520px;
+    padding:28px; box-shadow:0 20px 40px rgba(0,0,0,0.6);
+  }
+  .modal-card h3{font-family:'JetBrains Mono',monospace; font-size:18px; margin-bottom:14px;}
+
+  .hidden{display:none !important;}
+  .spin{display:inline-block; animation:spin 1s linear infinite;}
+  @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLoginScreen">
+  <div class="login-card">
+    <div class="eyebrow">admin-portal --login</div>
+    <h1>Administrator Sign In</h1>
+    <p class="sub">Enter your administrator credentials to access platform controls, user management, question bank editor, and audit logs.</p>
+    <div class="field">
+      <label>Admin Username</label>
+      <input id="fAdminUser" type="text" value="admin" placeholder="e.g. admin">
+    </div>
+    <div class="field">
+      <label>Admin Password</label>
+      <input id="fAdminPass" type="password" value="admin123" placeholder="••••••••">
+    </div>
+    <button id="adminLoginBtn" onclick="handleAdminLogin()">Sign In as Admin</button>
+    <div id="adminLoginError"></div>
+  </div>
+</div>
+
+<!-- ADMIN APP SHELL -->
+<div id="adminApp">
+  <header class="topbar">
+    <div class="brand">practice<span>-tracker --admin</span></div>
+    <div class="topbar-actions">
+      <button class="navbtn active" id="navAnalytics" onclick="switchAdminTab('analytics')">Dashboard</button>
+      <button class="navbtn" id="navUsers" onclick="switchAdminTab('users')">Users</button>
+      <button class="navbtn" id="navQuestions" onclick="switchAdminTab('questions')">Question Bank</button>
+      <button class="navbtn" id="navTrash" onclick="switchAdminTab('trash')">Trash Can</button>
+      <button class="navbtn" id="navLogs" onclick="switchAdminTab('logs')">Audit Logs</button>
+      <button class="navbtn ghost" onclick="exportBackupData()">Export Backup 💾</button>
+      <button class="navbtn danger" onclick="handleAdminLogout()">Log Out</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: ANALYTICS DASHBOARD -->
+    <div id="tabAnalytics">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="val" id="statUsers">0</div><div class="lbl">Registered Users</div></div>
+        <div class="stat-card"><div class="val" id="statActiveUsers" style="color:var(--m1);">0</div><div class="lbl">Active Users</div></div>
+        <div class="stat-card"><div class="val" id="statDisabledUsers" style="color:var(--m4);">0</div><div class="lbl">Disabled Users</div></div>
+        <div class="stat-card"><div class="val" id="statQuestions">0</div><div class="lbl">Total Questions</div></div>
+        <div class="stat-card"><div class="val" id="statTopics">0</div><div class="lbl">Topics</div></div>
+        <div class="stat-card"><div class="val" id="statAddedToday" style="color:var(--m2);">0</div><div class="lbl">Questions Added Today</div></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Questions per Module Breakdown</h3>
+        <div id="moduleBreakdown"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: USER MANAGEMENT -->
+    <div id="tabUsers" class="hidden">
+      <div class="panel-block">
+        <h3>
+          Registered Users &amp; Permissions
+          <button class="btn-sm success" onclick="openAddUserModal()">+ Add New User</button>
+        </h3>
+        <div class="filterbar">
+          <input id="userSearch" type="text" placeholder="Search user by name or email…" oninput="renderUsersTable()">
+          <select id="userStatusFilter" onchange="renderUsersTable()">
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="disabled">Disabled Only</option>
+          </select>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Batch</th>
+              <th>Status</th>
+              <th>Session</th>
+              <th>Solved</th>
+              <th>Handles (LC / HR / CC)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: QUESTION BANK & TOPIC EDITOR -->
+    <div id="tabQuestions" class="hidden">
+      <div class="panel-block">
+        <h3>Add New Question (Auto Platform &amp; Duplicate Detector)</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+          <div class="field" style="margin:0;">
+            <label>Question Title *</label>
+            <input id="qAddTitle" type="text" placeholder="e.g. Two Sum">
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Problem URL * (Auto Detects Platform &amp; Slug)</label>
+            <input id="qAddUrl" type="text" placeholder="e.g. https://leetcode.com/problems/two-sum" oninput="autoDetectPlatformInput()">
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Topic / Section *</label>
+            <select id="qAddTopic"></select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label>Difficulty *</label>
+            <select id="qAddDiff">
+              <option value="e">Easy</option>
+              <option value="m" selected>Medium</option>
+              <option value="h">Hard</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+          <button class="btn-sm success" style="padding:10px 18px;" onclick="handleAddQuestion()">Add Question to Bank</button>
+          <span id="detectedPlatformBadge" class="badge" style="display:none;"></span>
+          <button class="btn-sm" style="margin-left:auto;" onclick="openBulkImportModal()">Bulk Import (JSON / CSV) 📥</button>
+          <button class="btn-sm" onclick="openAddTopicModal()">+ Add Topic Section</button>
+        </div>
+        <div id="qAddError" style="color:var(--m4); font-size:12.5px; margin-top:8px; display:none;"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>Question Bank Directory</h3>
+        <div class="filterbar">
+          <input id="qSearch" type="text" placeholder="Search by question title or ID…" oninput="renderQuestionsTable()">
+          <select id="qModuleFilter" onchange="renderQuestionsTable()"><option value="all">All Modules</option></select>
+          <select id="qTopicFilter" onchange="renderQuestionsTable()"><option value="all">All Topics</option></select>
+          <select id="qDiffFilter" onchange="renderQuestionsTable()">
+            <option value="all">All Difficulties</option>
+            <option value="e">Easy</option>
+            <option value="m">Medium</option>
+            <option value="h">Hard</option>
+          </select>
+          <select id="qPlatFilter" onchange="renderQuestionsTable()">
+            <option value="all">All Platforms</option>
+            <option value="LC">LeetCode</option>
+            <option value="HR">HackerRank</option>
+            <option value="CF">Codeforces</option>
+            <option value="GFG">GeeksforGeeks</option>
+            <option value="OA">Custom / Other</option>
+          </select>
+          <span id="qCountLabel" style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);"></span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Topic</th>
+              <th>Diff</th>
+              <th>Platform</th>
+              <th>Link</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="questionsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: TRASH CAN -->
+    <div id="tabTrash" class="hidden">
+      <div class="panel-block">
+        <h3>
+          Trash Can (Soft-Deleted Items)
+          <button class="btn-sm danger" onclick="purgeAllTrash()">Purge All Trash ⚠️</button>
+        </h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Item / Title</th>
+              <th>Deleted At</th>
+              <th>Deleted By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: AUDIT LOGS -->
+    <div id="tabLogs" class="hidden">
+      <div class="panel-block">
+        <h3>Administrative Audit Logs</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Admin</th>
+              <th>Action</th>
+              <th>Target</th>
+              <th>Details / Diffs</th>
+            </tr>
+          </thead>
+          <tbody id="logsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-card" id="modalContent"></div>
+</div>
+
+let BACKEND_URL = localStorage.getItem("dsa_backend_url") || "https://dsa-tracker-33bv.onrender.com";
+let adminToken = localStorage.getItem("adminToken") || "";
+let currentAdminUser = null;
+
+let allQuestions = [];
+let allModules = [];
+let allUsers = [];
+let allLogs = [];
+let allTrash = [];
+
+/* ---------- AUTH & BOOT ---------- */
+async function handleAdminLogin(){
+  const username = document.getElementById("fAdminUser").value.trim();
+  const password = document.getElementById("fAdminPass").value.trim();
+  const errEl = document.getElementById("adminLoginError");
+  errEl.style.display = "none";
+
+  if(!username || !password){
+    errEl.textContent = "Please enter admin username and password.";
+    errEl.style.display = "block"; return;
+  }
+
+  const btn = document.getElementById("adminLoginBtn");
+  btn.disabled = true; btn.textContent = "Authenticating…";
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message || "Invalid credentials");
+
+    adminToken = data.token;
+    localStorage.setItem("adminToken", adminToken);
+    currentAdminUser = data.user;
+    enterAdminApp();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign In as Admin";
+  }
+}
+
+function handleAdminLogout(){
+  adminToken = "";
+  localStorage.removeItem("adminToken");
+  document.getElementById("adminApp").style.display = "none";
+  document.getElementById("adminLoginScreen").style.display = "flex";
+}
+
+async function fetchAdminData(){
+  if(!adminToken) return;
+  try {
+    // 1. Content Data
+    const cRes = await fetch(`${BACKEND_URL}/api/content`);
+    const cData = await cRes.json();
+    allQuestions = cData.questions || [];
+    allModules = cData.modules || [];
+
+    // 2. Users Data
+    const uRes = await fetch(`${BACKEND_URL}/api/admin/users`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const uData = await uRes.json();
+    if(uData.status === "success") allUsers = uData.users || [];
+
+    // 3. Trash Data
+    const tRes = await fetch(`${BACKEND_URL}/api/admin/trash`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const tData = await tRes.json();
+    if(tData.status === "success") allTrash = tData.trash || [];
+
+    // 4. Logs Data
+    const lRes = await fetch(`${BACKEND_URL}/api/admin/logs`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const lData = await lRes.json();
+    if(lData.status === "success") allLogs = lData.logs || [];
+
+    populateDropdowns();
+    renderAnalytics();
+    renderUsersTable();
+    renderQuestionsTable();
+    renderTrashTable();
+    renderLogsTable();
+  } catch(e) {
+    console.error("Admin data fetch error:", e);
+  }
+}
+
+function enterAdminApp(){
+  document.getElementById("adminLoginScreen").style.display = "none";
+  document.getElementById("adminApp").style.display = "block";
+  fetchAdminData();
+}
+
+function switchAdminTab(tab){
+  ["Analytics", "Users", "Questions", "Trash", "Logs"].forEach(t => {
+    const navBtn = document.getElementById("nav" + t);
+    const tabEl = document.getElementById("tab" + t);
+    const active = t.toLowerCase() === tab;
+    if(navBtn) navBtn.classList.toggle("active", active);
+    if(tabEl) tabEl.classList.toggle("hidden", !active);
+  });
+}
+
+function populateDropdowns(){
+  const qTopicSelect = document.getElementById("qAddTopic");
+  const qTopicFilter = document.getElementById("qTopicFilter");
+  const qModFilter = document.getElementById("qModuleFilter");
+
+  let topicOptionsHtml = "";
+  let topicFilterHtml = '<option value="all">All Topics</option>';
+  let modFilterHtml = '<option value="all">All Modules</option>';
+
+  const topicsList = [];
+
+  allModules.forEach(m => {
+    modFilterHtml += `<option value="${m.id}">${m.name}</option>`;
+    (m.topics || []).forEach(t => {
+      topicsList.push(t);
+      topicOptionsHtml += `<option value="${t}">${t}</option>`;
+      topicFilterHtml += `<option value="${t}">${t}</option>`;
+    });
+  });
+
+  if(qTopicSelect) qTopicSelect.innerHTML = topicOptionsHtml;
+  if(qTopicFilter) qTopicFilter.innerHTML = topicFilterHtml;
+  if(qModFilter) qModFilter.innerHTML = modFilterHtml;
+}
+
+/* ---------- ANALYTICS ---------- */
+function renderAnalytics(){
+  document.getElementById("statUsers").textContent = allUsers.length;
+  document.getElementById("statActiveUsers").textContent = allUsers.filter(u=>u.status==="active").length;
+  document.getElementById("statDisabledUsers").textContent = allUsers.filter(u=>u.status==="disabled").length;
+  document.getElementById("statQuestions").textContent = allQuestions.length;
+
+  let totalTopics = 0;
+  allModules.forEach(m => totalTopics += (m.topics || []).length);
+  document.getElementById("statTopics").textContent = totalTopics;
+
+  const todayStart = new Date().setHours(0,0,0,0);
+  const addedToday = allQuestions.filter(q => q.createdAt >= todayStart).length;
+  document.getElementById("statAddedToday").textContent = addedToday;
+
+  let mbHtml = "";
+  allModules.forEach((m, i) => {
+    let mCount = 0;
+    (m.topics || []).forEach(t => {
+      mCount += allQuestions.filter(q => q.topic === t).length;
+    });
+    const pct = allQuestions.length ? Math.round((mCount / allQuestions.length) * 100) : 0;
+    mbHtml += `<div class="mod-progress" style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+        <span>${m.name}</span>
+        <span class="mono" style="color:var(--muted);">${mCount} questions (${pct}%)</span>
+      </div>
+      <div class="bar-track" style="height:7px; background:var(--panel-2); border-radius:99px; overflow:hidden;">
+        <div style="width:${pct}%; height:100%; background:var(--m${i+1}); border-radius:99px;"></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById("moduleBreakdown").innerHTML = mbHtml;
+}
+
+/* ---------- USERS MANAGEMENT ---------- */
+function renderUsersTable(){
+  const search = (document.getElementById("userSearch").value || "").toLowerCase();
+  const statusFilter = document.getElementById("userStatusFilter").value;
+
+  const filtered = allUsers.filter(u => {
+    const matchSearch = !search || u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+    const matchStatus = statusFilter === "all" || u.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  let html = "";
+  filtered.forEach(u => {
+    const statusBadge = u.status === "active" ? '<span class="badge active">Active</span>' : '<span class="badge disabled">Disabled</span>';
+    const sessBadge = u.isOnline ? '<span class="badge active" style="font-size:9px;">Online</span>' : '<span class="badge" style="font-size:9px; color:var(--muted);">Offline</span>';
+    html += `<tr>
+      <td><b>${u.name}</b><br><span style="font-size:11.5px; color:var(--muted);">${u.email}</span></td>
+      <td>${u.batch || '—'}</td>
+      <td>${statusBadge}</td>
+      <td>${sessBadge}</td>
+      <td class="mono">${u.solvedCount || 0}</td>
+      <td style="font-size:11.5px; color:var(--muted);">
+        LC: ${u.leetcode || '—'}<br>HR: ${u.hackerrank || '—'}<br>CC: ${u.codechef || '—'}
+      </td>
+      <td>
+        <button class="btn-sm ${u.status==='active'?'danger':'success'}" onclick="toggleUserStatus('${u.id}', '${u.status==='active'?'disabled':'active'}')">${u.status==='active'?'Disable':'Enable'}</button>
+        <button class="btn-sm" onclick="forceLogoutUser('${u.id}')">Logout</button>
+        <button class="btn-sm" onclick="openResetPasswordModal('${u.id}', '${u.email}')">Reset Pass</button>
+        ${u.role!=='admin' ? `<button class="btn-sm danger" onclick="deleteUserPrompt('${u.id}', '${u.email}')">Delete</button>` : ''}
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById("usersTbody").innerHTML = html || '<tr><td colspan="7" style="color:var(--muted); text-align:center;">No users found.</td></tr>';
+}
+
+async function toggleUserStatus(userId, newStatus){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${userId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    fetchAdminData();
+  } catch(e) { alert("Error changing user status: " + e.message); }
+}
+
+async function forceLogoutUser(userId){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${userId}/force-logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    alert(data.message);
+    fetchAdminData();
+  } catch(e) { alert("Error: " + e.message); }
+}
+
+function openAddUserModal(){
+  openModal(`
+    <h3>Add New User</h3>
+    <div class="field"><label>Full Name *</label><input id="mUName" type="text"></div>
+    <div class="field"><label>Email ID *</label><input id="mUEmail" type="email"></div>
+    <div class="field"><label>Batch</label><input id="mUBatch" type="text" value="BCA24"></div>
+    <div class="field"><label>Default Password</label><input id="mUPass" type="password" value="user123"></div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm success" onclick="submitAddUser()">Create User Account</button>
+    </div>
+  `);
+}
+
+async function submitAddUser(){
+  const name = document.getElementById("mUName").value.trim();
+  const email = document.getElementById("mUEmail").value.trim();
+  const batch = document.getElementById("mUBatch").value.trim();
+  const password = document.getElementById("mUPass").value.trim();
+
+  if(!name || !email){ alert("Name and email are required."); return; }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ name, email, batch, password })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error adding user: " + e.message); }
+}
+
+function openResetPasswordModal(userId, email){
+  openModal(`
+    <h3>Reset Password for ${email}</h3>
+    <div class="field"><label>New Password *</label><input id="mNewPass" type="password" placeholder="Enter new password"></div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm success" onclick="submitResetPassword('${userId}')">Save New Password</button>
+    </div>
+  `);
+}
+
+async function submitResetPassword(userId){
+  const newPassword = document.getElementById("mNewPass").value.trim();
+  if(!newPassword){ alert("Password cannot be empty."); return; }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${userId}/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ newPassword })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    alert(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error resetting password: " + e.message); }
+}
+
+function deleteUserPrompt(userId, email){
+  openModal(`
+    <h3>Delete User Account?</h3>
+    <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px;">Are you sure you want to delete <b>${email}</b>? This item will be moved to the Trash Can.</p>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm danger" onclick="submitDeleteUser('${userId}')">Yes, Delete User</button>
+    </div>
+  `);
+}
+
+async function submitDeleteUser(userId){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error deleting user: " + e.message); }
+}
+
+/* ---------- QUESTION BANK MANAGEMENT ---------- */
+function autoDetectPlatformInput(){
+  const url = document.getElementById("qAddUrl").value.trim();
+  const badge = document.getElementById("detectedPlatformBadge");
+  if(!url){ badge.style.display="none"; return; }
+
+  const map = { LC:"LeetCode", HR:"HackerRank", CF:"Codeforces", CC:"CodeChef", GFG:"GeeksforGeeks", AC:"AtCoder", IB:"InterviewBit", OA:"Custom / Link" };
+  let p = "OA";
+  if (url.includes("leetcode.com")) p = "LC";
+  else if (url.includes("hackerrank.com")) p = "HR";
+  else if (url.includes("codeforces.com")) p = "CF";
+  else if (url.includes("codechef.com")) p = "CC";
+  else if (url.includes("geeksforgeeks.org")) p = "GFG";
+
+  badge.textContent = "Detected Platform: " + map[p];
+  badge.className = `badge ${p.toLowerCase()}`;
+  badge.style.display = "inline-block";
+}
+
+async function handleAddQuestion(){
+  const title = document.getElementById("qAddTitle").value.trim();
+  const url = document.getElementById("qAddUrl").value.trim();
+  const topic = document.getElementById("qAddTopic").value;
+  const difficulty = document.getElementById("qAddDiff").value;
+  const errEl = document.getElementById("qAddError");
+  errEl.style.display = "none";
+
+  if(!title || !topic){
+    errEl.textContent = "Please enter question title and select topic.";
+    errEl.style.display = "block"; return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/questions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ title, url, topic, difficulty })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+
+    document.getElementById("qAddTitle").value = "";
+    document.getElementById("qAddUrl").value = "";
+    document.getElementById("detectedPlatformBadge").style.display = "none";
+    fetchAdminData();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = "block";
+  }
+}
+
+function renderQuestionsTable(){
+  const search = (document.getElementById("qSearch").value || "").toLowerCase();
+  const modFilter = document.getElementById("qModuleFilter").value;
+  const topicFilter = document.getElementById("qTopicFilter").value;
+  const diffFilter = document.getElementById("qDiffFilter").value;
+  const platFilter = document.getElementById("qPlatFilter").value;
+
+  const filtered = allQuestions.filter(q => {
+    const matchSearch = !search || q.title.toLowerCase().includes(search) || q.id.toLowerCase().includes(search);
+    const matchTopic = topicFilter === "all" || q.topic === topicFilter;
+    const matchDiff = diffFilter === "all" || q.difficulty === diffFilter;
+    const matchPlat = platFilter === "all" || q.platform === platFilter;
+    return matchSearch && matchTopic && matchDiff && matchPlat;
+  });
+
+  document.getElementById("qCountLabel").textContent = `${filtered.length} / ${allQuestions.length} shown`;
+
+  let html = "";
+  filtered.forEach(q => {
+    const diffBadge = q.difficulty === "e" ? '<span class="badge easy">Easy</span>' : q.difficulty === "m" ? '<span class="badge med">Med</span>' : '<span class="badge hard">Hard</span>';
+    const platTag = `<span class="badge">${q.platform || 'OA'}</span>`;
+    const linkBtn = q.url ? `<a href="${q.url}" target="_blank" class="btn-sm" style="text-decoration:none;">Open Link ↗</a>` : '<span style="color:var(--muted)">—</span>';
+    html += `<tr>
+      <td class="mono" style="font-size:11.5px; color:var(--muted);">${q.id}</td>
+      <td><b>${q.title}</b></td>
+      <td>${q.topic}</td>
+      <td>${diffBadge}</td>
+      <td>${platTag}</td>
+      <td>${linkBtn}</td>
+      <td>
+        <button class="btn-sm" onclick="openEditQuestionModal('${q.id}')">Edit</button>
+        <button class="btn-sm danger" onclick="deleteQuestionPrompt('${q.id}', '${q.title.replace(/'/g, "\\'")}')">Delete</button>
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById("questionsTbody").innerHTML = html || '<tr><td colspan="7" style="color:var(--muted); text-align:center;">No questions match filter criteria.</td></tr>';
+}
+
+function openEditQuestionModal(qId){
+  const q = allQuestions.find(x => x.id === qId);
+  if(!q) return;
+
+  let topicOpts = "";
+  allModules.forEach(m => {
+    (m.topics || []).forEach(t => {
+      topicOpts += `<option value="${t}" ${q.topic===t?'selected':''}>${t}</option>`;
+    });
+  });
+
+  openModal(`
+    <h3>Edit Question Details</h3>
+    <div class="field"><label>Title *</label><input id="mEQTitle" type="text" value="${q.title}"></div>
+    <div class="field"><label>Problem URL</label><input id="mEQUrl" type="text" value="${q.url || ''}"></div>
+    <div class="field"><label>Topic / Section</label><select id="mEQTopic">${topicOpts}</select></div>
+    <div class="field"><label>Difficulty</label>
+      <select id="mEQDiff">
+        <option value="e" ${q.difficulty==='e'?'selected':''}>Easy</option>
+        <option value="m" ${q.difficulty==='m'?'selected':''}>Medium</option>
+        <option value="h" ${q.difficulty==='h'?'selected':''}>Hard</option>
+      </select>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm success" onclick="submitEditQuestion('${qId}')">Save Changes</button>
+    </div>
+  `);
+}
+
+async function submitEditQuestion(qId){
+  const title = document.getElementById("mEQTitle").value.trim();
+  const url = document.getElementById("mEQUrl").value.trim();
+  const topic = document.getElementById("mEQTopic").value;
+  const difficulty = document.getElementById("mEQDiff").value;
+
+  if(!title || !topic){ alert("Title and Topic are required."); return; }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/questions/${qId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ title, url, topic, difficulty })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error editing question: " + e.message); }
+}
+
+function deleteQuestionPrompt(qId, title){
+  openModal(`
+    <h3>Move Question to Trash?</h3>
+    <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px;">Are you sure you want to move <b>"${title}"</b> to Trash? It can be restored at any time.</p>
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm danger" onclick="submitDeleteQuestion('${qId}')">Move to Trash</button>
+    </div>
+  `);
+}
+
+async function submitDeleteQuestion(qId){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/questions/${qId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error deleting question: " + e.message); }
+}
+
+function openAddTopicModal(){
+  let modOpts = "";
+  allModules.forEach(m => { modOpts += `<option value="${m.id}">${m.name}</option>`; });
+
+  openModal(`
+    <h3>Add New Topic / Section</h3>
+    <div class="field"><label>Parent Module *</label><select id="mATMod">${modOpts}</select></div>
+    <div class="field"><label>New Topic Name *</label><input id="mATName" type="text" placeholder="e.g. Graph Algorithms"></div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm success" onclick="submitAddTopic()">Add Topic</button>
+    </div>
+  `);
+}
+
+async function submitAddTopic(){
+  const moduleId = document.getElementById("mATMod").value;
+  const name = document.getElementById("mATName").value.trim();
+  if(!name){ alert("Topic name required."); return; }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/topics`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ name, moduleId })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Error adding topic: " + e.message); }
+}
+
+function openBulkImportModal(){
+  openModal(`
+    <h3>Bulk Import Questions (JSON / CSV)</h3>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">Paste a JSON array of questions or CSV formatted lines (Title, Topic, Difficulty, Link).</p>
+    <div class="field">
+      <textarea id="mImportData" rows="8" placeholder='[{"title":"Two Sum","topic":"Arrays","difficulty":"e","url":"https://leetcode.com/problems/two-sum"}]'></textarea>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm success" onclick="submitBulkImport()">Import Questions</button>
+    </div>
+  `);
+}
+
+async function submitBulkImport(){
+  const questionsData = document.getElementById("mImportData").value.trim();
+  if(!questionsData){ alert("Import text required."); return; }
+
+  const format = questionsData.startsWith("[") || questionsData.startsWith("{") ? "json" : "csv";
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/questions/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ questionsData, format })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    alert(data.message);
+    closeModal();
+    fetchAdminData();
+  } catch(e) { alert("Import error: " + e.message); }
+}
+
+async function exportBackupData(){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/export`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+
+    const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const dlAnchor = document.createElement("a");
+    dlAnchor.setAttribute("href", jsonStr);
+    dlAnchor.setAttribute("download", `dsa_tracker_backup_${Date.now()}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  } catch(e) { alert("Backup export error: " + e.message); }
+}
+
+/* ---------- TRASH CAN ---------- */
+function renderTrashTable(){
+  let html = "";
+  allTrash.forEach(t => {
+    const title = t.item ? (t.item.title || t.item.email || t.item.id) : (t.id || "Item");
+    const dateStr = new Date(t.deletedAt || Date.now()).toLocaleString();
+    html += `<tr>
+      <td><span class="badge danger">${t.type || 'item'}</span></td>
+      <td><b>${title}</b></td>
+      <td>${dateStr}</td>
+      <td>${t.deletedBy || 'admin'}</td>
+      <td>
+        <button class="btn-sm success" onclick="restoreTrashItem('${t.item?.id || t.id}', '${t.type}')">Restore</button>
+        <button class="btn-sm danger" onclick="purgeTrashItem('${t.item?.id || t.id}')">Purge</button>
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById("trashTbody").innerHTML = html || '<tr><td colspan="5" style="color:var(--muted); text-align:center;">Trash Can is empty.</td></tr>';
+}
+
+async function restoreTrashItem(id, type){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/trash/restore`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ id, type })
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    fetchAdminData();
+  } catch(e) { alert("Error restoring item: " + e.message); }
+}
+
+async function purgeTrashItem(id){
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/trash/purge?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    fetchAdminData();
+  } catch(e) { alert("Error purging item: " + e.message); }
+}
+
+async function purgeAllTrash(){
+  if(!confirm("Are you sure you want to PERMANENTLY delete all items in Trash?")) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/trash/purge?id=all`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if(data.status !== "success") throw new Error(data.message);
+    fetchAdminData();
+  } catch(e) { alert("Error purging trash: " + e.message); }
+}
+
+/* ---------- AUDIT LOGS ---------- */
+function renderLogsTable(){
+  let html = "";
+  allLogs.forEach(l => {
+    const dateStr = new Date(l.timestamp).toLocaleString();
+    let diffStr = "—";
+    if(l.oldValue || l.newValue){
+      diffStr = `<span style="font-size:11px; color:var(--muted);">Old: ${JSON.stringify(l.oldValue)} <br> New: ${JSON.stringify(l.newValue)}</span>`;
+    } else if(l.details){
+      diffStr = `<span style="font-size:11px; color:var(--muted);">${JSON.stringify(l.details)}</span>`;
+    }
+    html += `<tr>
+      <td class="mono" style="font-size:11.5px; color:var(--muted);">${dateStr}</td>
+      <td><b>${l.admin}</b></td>
+      <td><span class="badge active">${l.action}</span></td>
+      <td>${l.target}</td>
+      <td>${diffStr}</td>
+    </tr>`;
+  });
+
+  document.getElementById("logsTbody").innerHTML = html || '<tr><td colspan="5" style="color:var(--muted); text-align:center;">No audit logs recorded yet.</td></tr>';
+}
+
+/* ---------- MODAL HELPERS ---------- */
+function openModal(html){
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+function closeModal(){
+  document.getElementById("modalOverlay").classList.add("hidden");
+}
+
+/* Boot check */
+if(adminToken){
+  enterAdminApp();
+}
+</script>
+</body>
+</html>
