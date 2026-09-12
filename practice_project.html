@@ -178,7 +178,7 @@
 <body>
 
 <!-- ===================== LOGIN ===================== -->
-<div id="loginScreen" style="display:flex;">
+<div id="loginScreen">
   <div class="login-card">
     <div class="eyebrow">practice-tracker --login</div>
     <h1>Sign in to track your practice</h1>
@@ -210,6 +210,11 @@
     <div class="field">
       <label>CodeChef profile link <span style="color:var(--muted)">(optional)</span></label>
       <input id="fCC" type="text" placeholder="e.g. https://www.codechef.com/users/aditi_cc">
+    </div>
+    <div class="field">
+      <label>Backend URL <span style="color:var(--muted)">(set once by whoever deployed it — see chat for setup steps)</span></label>
+      <input id="fBackend" type="text" value="http://localhost:3000" placeholder="e.g. http://localhost:3000">
+    </div>
     <button id="loginBtn" onclick="handleLogin()">Log in</button>
     <div id="loginError"></div>
     <p class="privacy-note">This isn't secure authentication — there's no password or OTP check, so it can't fully stop someone from typing in another student's email. It's a lightweight class tracker: your email identifies your account, and your name, batch, and verified-solved list are visible to classmates using this same project via the leaderboard.</p>
@@ -2113,6 +2118,7 @@ async function handleLogin(){
   const leetcode = extractUsername(document.getElementById("fLC").value, "leetcode");
   const hackerrank = extractUsername(document.getElementById("fHR").value, "hackerrank");
   const codechef = extractUsername(document.getElementById("fCC").value, "codechef");
+  const backendUrl = document.getElementById("fBackend").value.trim().replace(/\/+$/,"");
   const errEl = document.getElementById("loginError");
   errEl.style.display="none";
   if(!name || !email){
@@ -2127,6 +2133,11 @@ async function handleLogin(){
   }
   document.getElementById("loginBtn").disabled = true;
   try{
+    if(backendUrl){
+      await sSet("config:backendUrl", backendUrl, true);
+      BACKEND_URL = backendUrl;
+    }
+
     // Authenticate with backend
     if(BACKEND_URL){
       const res = await fetch(`${BACKEND_URL}/api/user/login`, {
@@ -2538,31 +2549,22 @@ function renderPlatformStats(){
 async function enterApp(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("app").style.display="block";
-  document.getElementById("whoami").innerHTML = `<b>${currentStudent.name || 'Student'}</b> · ${currentStudent.email} · ${currentStudent.batch || 'BCA24'}`;
+  document.getElementById("whoami").innerHTML = `<b>${currentStudent.name}</b> · ${currentStudent.email} · ${currentStudent.batch}`;
   const statusEl = document.getElementById("syncStatus");
-  if(statusEl){
-    if(currentStudent.lastSync){
-      statusEl.textContent = `Last synced ${new Date(currentStudent.lastSync).toLocaleString()}.`;
-    } else if(!currentStudent.leetcode && !currentStudent.hackerrank && !currentStudent.codechef){
-      statusEl.textContent = "No platform profiles on file yet — log out and back in to add one, then sync.";
-    }
+  if(currentStudent.lastSync){
+    statusEl.textContent = `Last synced ${new Date(currentStudent.lastSync).toLocaleString()}.`;
+  } else if(!currentStudent.leetcode && !currentStudent.hackerrank && !currentStudent.codechef){
+    statusEl.textContent = "No platform profiles on file yet — log out and back in to add one, then sync.";
   }
-
-  // Render UI immediately so screen never stays blank!
+  await loadDynamicContent();
   renderPlatformStats();
   renderPracticeBank();
   switchView("dashboard");
   renderDashboard();
-  loadLeaderboard().catch(e => console.warn("Leaderboard load:", e));
-
-  // Load dynamic content in background asynchronously
-  loadDynamicContent().then(() => {
-    renderPracticeBank();
-    renderDashboard();
-  }).catch(e => console.warn("Dynamic content load:", e));
+  loadLeaderboard();
 
   // Auto-sync in background on load if profile handles exist
-  if(currentStudent && (currentStudent.leetcode || currentStudent.hackerrank || currentStudent.codechef)){
+  if(currentStudent.leetcode || currentStudent.hackerrank || currentStudent.codechef){
     syncAll().catch(e => console.warn("Background auto-sync completed with note:", e));
   }
 }
@@ -3100,15 +3102,19 @@ function clearFilters(){
     const savedBackend = localStorage.getItem("dsa_backend_url");
     if(savedBackend){
       BACKEND_URL = savedBackend;
-    } else if(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"){
-      BACKEND_URL = "http://localhost:3000";
     } else {
-      BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
+      const cfg = await sGet("config:backendUrl", true);
+      if(cfg && cfg.value){
+        BACKEND_URL = cfg.value;
+      } else {
+        BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
+      }
     }
-  }catch(e){ /* fallback */ }
+    const fb = document.getElementById("fBackend");
+    if(fb) fb.value = BACKEND_URL;
+  }catch(e){ /* fallback to default */ }
 
-  // Non-blocking dynamic load
-  loadDynamicContent().catch(e => console.warn("Background content load:", e));
+  await loadDynamicContent();
 
   const token = localStorage.getItem("dsa_user_token");
   if(token && BACKEND_URL){
@@ -3125,15 +3131,8 @@ function clearFilters(){
       }
     }catch(e){
       console.warn("Session validation failed:", e);
-      localStorage.removeItem("dsa_user_token");
     }
   }
-
-  // Fail-safe display login screen
-  const ls = document.getElementById("loginScreen");
-  const appEl = document.getElementById("app");
-  if(ls) ls.style.display = "flex";
-  if(appEl) appEl.style.display = "none";
 })();
 </script>
 
