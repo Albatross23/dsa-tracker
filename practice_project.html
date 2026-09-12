@@ -211,9 +211,9 @@
       <label>CodeChef profile link <span style="color:var(--muted)">(optional)</span></label>
       <input id="fCC" type="text" placeholder="e.g. https://www.codechef.com/users/aditi_cc">
     </div>
-    <div class="field">
-      <label>Backend URL <span style="color:var(--muted)">(set once by whoever deployed it — see chat for setup steps)</span></label>
-      <input id="fBackend" type="text" value="http://localhost:3000" placeholder="e.g. http://localhost:3000">
+    <div class="field" style="display:none;">
+      <label>Backend URL</label>
+      <input id="fBackend" type="text" value="https://dsa-tracker-33bv.onrender.com">
     </div>
     <button id="loginBtn" onclick="handleLogin()">Log in</button>
     <div id="loginError"></div>
