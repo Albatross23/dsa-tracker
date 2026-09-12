@@ -1,0 +1,22 @@
+[
+  {
+    "id": "LOG_1785924179801_681",
+    "timestamp": 1785924179801,
+    "admin": "admin",
+    "action": "ADMIN_LOGIN",
+    "target": "admin",
+    "details": {
+      "ip": "::1"
+    },
+    "oldValue": null,
+    "newValue": null
+  },
+  {
+    "id": "LOG_1001",
+    "timestamp": 1785919619792,
+    "admin": "admin",
+    "action": "INITIALIZE_SYSTEM",
+    "target": "System Data Store",
+    "details": "Initialized question bank and admin authentication tables."
+  }
+]
