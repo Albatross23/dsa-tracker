@@ -2113,7 +2113,6 @@ async function handleLogin(){
   const leetcode = extractUsername(document.getElementById("fLC").value, "leetcode");
   const hackerrank = extractUsername(document.getElementById("fHR").value, "hackerrank");
   const codechef = extractUsername(document.getElementById("fCC").value, "codechef");
-  const backendUrl = document.getElementById("fBackend").value.trim().replace(/\/+$/,"");
   const errEl = document.getElementById("loginError");
   errEl.style.display="none";
   if(!name || !email){
@@ -2128,11 +2127,6 @@ async function handleLogin(){
   }
   document.getElementById("loginBtn").disabled = true;
   try{
-    if(backendUrl){
-      await sSet("config:backendUrl", backendUrl, true);
-      BACKEND_URL = backendUrl;
-    }
-
     // Authenticate with backend
     if(BACKEND_URL){
       const res = await fetch(`${BACKEND_URL}/api/user/login`, {
