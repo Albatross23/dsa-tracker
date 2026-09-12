@@ -3107,7 +3107,8 @@ function clearFilters(){
     }
   }catch(e){ /* fallback to default */ }
 
-  await loadDynamicContent();
+  // Non-blocking dynamic load in background
+  loadDynamicContent().catch(e => console.warn("Background content load:", e));
 
   const token = localStorage.getItem("dsa_user_token");
   if(token && BACKEND_URL){
@@ -3126,6 +3127,10 @@ function clearFilters(){
       console.warn("Session validation failed:", e);
     }
   }
+
+  // Ensure login screen is visible if no saved session
+  const ls = document.getElementById("loginScreen");
+  if(ls) ls.style.display = "flex";
 })();
 </script>
 
