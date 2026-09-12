@@ -210,11 +210,6 @@
     <div class="field">
       <label>CodeChef profile link <span style="color:var(--muted)">(optional)</span></label>
       <input id="fCC" type="text" placeholder="e.g. https://www.codechef.com/users/aditi_cc">
-    </div>
-    <div class="field">
-      <label>Backend URL <span style="color:var(--muted)">(set once by whoever deployed it — see chat for setup steps)</span></label>
-      <input id="fBackend" type="text" value="http://localhost:3000" placeholder="e.g. http://localhost:3000">
-    </div>
     <button id="loginBtn" onclick="handleLogin()">Log in</button>
     <div id="loginError"></div>
     <p class="privacy-note">This isn't secure authentication — there's no password or OTP check, so it can't fully stop someone from typing in another student's email. It's a lightweight class tracker: your email identifies your account, and your name, batch, and verified-solved list are visible to classmates using this same project via the leaderboard.</p>
@@ -3102,16 +3097,11 @@ function clearFilters(){
     const savedBackend = localStorage.getItem("dsa_backend_url");
     if(savedBackend){
       BACKEND_URL = savedBackend;
+    } else if(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"){
+      BACKEND_URL = "http://localhost:3000";
     } else {
-      const cfg = await sGet("config:backendUrl", true);
-      if(cfg && cfg.value){
-        BACKEND_URL = cfg.value;
-      } else {
-        BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
-      }
+      BACKEND_URL = "https://dsa-tracker-33bv.onrender.com";
     }
-    const fb = document.getElementById("fBackend");
-    if(fb) fb.value = BACKEND_URL;
   }catch(e){ /* fallback to default */ }
 
   await loadDynamicContent();
